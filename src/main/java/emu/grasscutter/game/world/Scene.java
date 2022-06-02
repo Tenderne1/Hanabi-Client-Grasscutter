@@ -7,6 +7,7 @@ import emu.grasscutter.data.excels.*;
 import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.dungeons.DungeonSettleListener;
 import emu.grasscutter.game.dungeons.challenge.DungeonChallenge;
+import emu.grasscutter.game.dungeons.challenge.WorldChallenge;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.player.TeamInfo;
@@ -55,7 +56,7 @@ public class Scene {
 	private DungeonData dungeonData;
 	private int prevScene; // Id of the previous scene
 	private int prevScenePoint;
-	
+
 	public Scene(World world, SceneData sceneData) {
 		this.world = world;
 		this.sceneData = sceneData;
@@ -65,7 +66,7 @@ public class Scene {
 		this.time = 8 * 60;
 		this.climate = ClimateType.CLIMATE_SUNNY;
 		this.prevScene = 3;
-		
+
 		this.spawnedEntities = new HashSet<>();
 		this.deadSpawnedEntities = new HashSet<>();
 		this.loadedBlocks = new HashSet<>();

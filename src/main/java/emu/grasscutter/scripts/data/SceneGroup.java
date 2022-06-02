@@ -95,7 +95,7 @@ public class SceneGroup {
 		}
 
 		this.script = cs;
-		
+
 		// Eval script
 		try {
 			cs.eval(bindings);
@@ -116,7 +116,7 @@ public class SceneGroup {
 			suites = ScriptLoader.getSerializer().toList(SceneSuite.class, bindings.get("suites"));
 			regions = ScriptLoader.getSerializer().toList(SceneRegion.class, bindings.get("regions"));
 			init_config = ScriptLoader.getSerializer().toObject(SceneInitConfig.class, bindings.get("init_config"));
-			
+
 			// Garbages TODO fix properly later
 			Object garbagesValue = bindings.get("garbages");
 			if (garbagesValue != null && garbagesValue instanceof LuaValue garbagesTable) {
@@ -126,7 +126,7 @@ public class SceneGroup {
 					garbages.gadgets.forEach(m -> m.group = this);
 				}
 			}
-			
+
 			// Add variables to suite
 			variables = ScriptLoader.getSerializer().toList(SceneVar.class, bindings.get("variables"));
 			// NPC in groups
@@ -161,7 +161,7 @@ public class SceneGroup {
 		} catch (ScriptException e) {
 			Grasscutter.getLogger().error("Error loading group " + id + " in scene " + sceneId, e);
 		}
-		
+
 		Grasscutter.getLogger().info("group {} in scene {} is loaded successfully.", id, sceneId);
 		return this;
 	}

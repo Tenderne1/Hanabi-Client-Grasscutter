@@ -40,178 +40,183 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 public class EntityGadget extends EntityBaseGadget {
-	private final GadgetData data;
-	private final Position pos;
-	private final Position rot;
-	private int gadgetId;
-	
-	private int state;
-	private int pointType;
-	private GadgetContent content;
-	private SceneGadget metaGadget;
+    private final GadgetData data;
+    private final Position pos;
+    private final Position rot;
+    private int gadgetId;
 
-	private IntSet worktopOptions;
+    private int state;
+    private int pointType;
+    private GadgetContent content;
+    private SceneGadget metaGadget;
+
+    private IntSet worktopOptions;
 
 
-	public EntityGadget(Scene scene, int gadgetId, Position pos) {
-		super(scene);
-		this.data = GameData.getGadgetDataMap().get(gadgetId);
-		this.id = getScene().getWorld().getNextEntityId(EntityIdType.GADGET);
-		this.gadgetId = gadgetId;
-		this.pos = pos.clone();
-		this.rot = new Position();
-	}
-	
-	public GadgetData getGadgetData() {
-		return data;
-	}
+    public EntityGadget(Scene scene, int gadgetId, Position pos) {
+        super(scene);
+        this.data = GameData.getGadgetDataMap().get(gadgetId);
+        this.id = getScene().getWorld().getNextEntityId(EntityIdType.GADGET);
+        this.gadgetId = gadgetId;
+        this.pos = pos == null ? new Position(0, 0, 0) : pos.clone();
+        this.rot = new Position();
+    }
 
-	@Override
-	public Position getPosition() {
-		// TODO Auto-generated method stub
-		return this.pos;
-	}
+    public EntityGadget(Scene scene, int gadgetId, Position pos, GadgetContent content) {
+        this(scene, gadgetId, pos);
+        this.content = content;
+    }
 
-	@Override
-	public Position getRotation() {
-		// TODO Auto-generated method stub
-		return this.rot;
-	}
-	
-	public int getGadgetId() {
-		return gadgetId;
-	}
+    public GadgetData getGadgetData() {
+        return data;
+    }
 
-	public void setGadgetId(int gadgetId) {
-		this.gadgetId = gadgetId;
-	}
+    @Override
+    public Position getPosition() {
+        // TODO Auto-generated method stub
+        return this.pos;
+    }
 
-	public int getState() {
-		return state;
-	}
+    @Override
+    public Position getRotation() {
+        // TODO Auto-generated method stub
+        return this.rot;
+    }
 
-	public void setState(int state) {
-		this.state = state;
-	}
+    public int getGadgetId() {
+        return gadgetId;
+    }
 
-	public void updateState(int state){
-		this.setState(state);
-		this.getScene().broadcastPacket(new PacketGadgetStateNotify(this, state));
-		getScene().getScriptManager().callEvent(EventType.EVENT_GADGET_STATE_CHANGE, new ScriptArgs(state, this.getConfigId()));
-	}
+    public void setGadgetId(int gadgetId) {
+        this.gadgetId = gadgetId;
+    }
 
-	public IntSet getWorktopOptions() {
-		return worktopOptions;
-	}
-	
-	public void addWorktopOptions(int[] options) {
-		if (this.worktopOptions == null) {
-			this.worktopOptions = new IntOpenHashSet();
-		}
-		Arrays.stream(options).forEach(this.worktopOptions::add);
-	}
+    public int getState() {
+        return state;
+    }
 
-	public int getPointType() {
-		return pointType;
-	}
+    public void setState(int state) {
+        this.state = state;
+    }
 
-	public void setPointType(int pointType) {
-		this.pointType = pointType;
-	}
+    public void updateState(int state) {
+        this.setState(state);
+        this.getScene().broadcastPacket(new PacketGadgetStateNotify(this, state));
+        getScene().getScriptManager().callEvent(EventType.EVENT_GADGET_STATE_CHANGE, new ScriptArgs(state, this.getConfigId()));
+    }
 
-	public GadgetContent getContent() {
-		return content;
-	}
+    public IntSet getWorktopOptions() {
+        return worktopOptions;
+    }
 
-	public SceneGadget getMetaGadget() {
-		return metaGadget;
-	}
+    public void addWorktopOptions(int[] options) {
+        if (this.worktopOptions == null) {
+            this.worktopOptions = new IntOpenHashSet();
+        }
+        Arrays.stream(options).forEach(this.worktopOptions::add);
+    }
 
-	public void setMetaGadget(SceneGadget metaGadget) {
-		this.metaGadget = metaGadget;
-	}
+    public int getPointType() {
+        return pointType;
+    }
 
-	public void buildContent() {
-		if (getContent() != null || getGadgetData() == null || getGadgetData().getType() == null) {
-			return;
-		}
+    public void setPointType(int pointType) {
+        this.pointType = pointType;
+    }
 
-		EntityType type = getGadgetData().getType();
-		GadgetContent content = switch (type) {
-			case GatherPoint -> new GadgetGatherPoint(this);
-			case Worktop -> new GadgetWorktop(this);
-			case RewardStatue -> new GadgetRewardStatue(this);
-			case Chest -> new GadgetChest(this);
-			default -> null;
-		};
+    public GadgetContent getContent() {
+        return content;
+    }
 
-		this.content = content;
-	}
+    public SceneGadget getMetaGadget() {
+        return metaGadget;
+    }
 
-	public void removeWorktopOption(int option) {
-		if (this.worktopOptions == null) {
-			return;
-		}
-		this.worktopOptions.remove(option);
-	}
+    public void setMetaGadget(SceneGadget metaGadget) {
+        this.metaGadget = metaGadget;
+    }
 
-	@Override
-	public Int2FloatOpenHashMap getFightProperties() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public void buildContent() {
+        if (getContent() != null || getGadgetData() == null || getGadgetData().getType() == null) {
+            return;
+        }
 
-	@Override
-	public void onDeath(int killerId) {
-		
-	}
-	
-	@Override
-	public SceneEntityInfo toProto() {
-		EntityAuthorityInfo authority = EntityAuthorityInfo.newBuilder()
-				.setAbilityInfo(AbilitySyncStateInfo.newBuilder())
-				.setRendererChangedInfo(EntityRendererChangedInfo.newBuilder())
-				.setAiInfo(SceneEntityAiInfo.newBuilder().setIsAiOpen(true).setBornPos(Vector.newBuilder()))
-				.setBornPos(Vector.newBuilder())
-				.build();
-		
-		SceneEntityInfo.Builder entityInfo = SceneEntityInfo.newBuilder()
-				.setEntityId(getId())
-				.setEntityType(ProtEntityType.PROT_ENTITY_TYPE_GADGET)
-				.setMotionInfo(MotionInfo.newBuilder().setPos(getPosition().toProto()).setRot(getRotation().toProto()).setSpeed(Vector.newBuilder()))
-				.addAnimatorParaList(AnimatorParameterValueInfoPair.newBuilder())
-				.setEntityClientData(EntityClientData.newBuilder())
-				.setEntityAuthorityInfo(authority)
-				.setLifeState(1);
-		
-		PropPair pair = PropPair.newBuilder()
-				.setType(PlayerProperty.PROP_LEVEL.getId())
-				.setPropValue(ProtoHelper.newPropValue(PlayerProperty.PROP_LEVEL, 1))
-				.build();
-		entityInfo.addPropList(pair);
-		
-		SceneGadgetInfo.Builder gadgetInfo = SceneGadgetInfo.newBuilder()
-				.setGadgetId(this.getGadgetId())
-				.setGroupId(this.getGroupId())
-				.setConfigId(this.getConfigId())
-				.setGadgetState(this.getState())
-				.setIsEnableInteract(true)
-				.setAuthorityPeerId(this.getScene().getWorld().getHostPeerId());
-		
-		if (this.getGadgetData().getType() == EntityType.Worktop && this.getWorktopOptions() != null) {
-			WorktopInfo worktop = WorktopInfo.newBuilder()
-					.addAllOptionList(this.getWorktopOptions())
-					.build();
-			gadgetInfo.setWorktop(worktop);
-		}
+        EntityType type = getGadgetData().getType();
+        GadgetContent content = switch (type) {
+            case GatherPoint -> new GadgetGatherPoint(this);
+            case Worktop -> new GadgetWorktop(this);
+            case RewardStatue -> new GadgetRewardStatue(this);
+            case Chest -> new GadgetChest(this);
+            default -> null;
+        };
 
-		entityInfo.setGadget(gadgetInfo);
-		
-		return entityInfo.build();
-	}
+        this.content = content;
+    }
 
-	public void die() {
-		getScene().broadcastPacket(new PacketLifeStateChangeNotify(this, LifeState.LIFE_DEAD));
-		this.onDeath(0);
-	}
+    public void removeWorktopOption(int option) {
+        if (this.worktopOptions == null) {
+            return;
+        }
+        this.worktopOptions.remove(option);
+    }
+
+    @Override
+    public Int2FloatOpenHashMap getFightProperties() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void onDeath(int killerId) {
+
+    }
+
+    @Override
+    public SceneEntityInfo toProto() {
+        EntityAuthorityInfo authority = EntityAuthorityInfo.newBuilder()
+                .setAbilityInfo(AbilitySyncStateInfo.newBuilder())
+                .setRendererChangedInfo(EntityRendererChangedInfo.newBuilder())
+                .setAiInfo(SceneEntityAiInfo.newBuilder().setIsAiOpen(true).setBornPos(Vector.newBuilder()))
+                .setBornPos(Vector.newBuilder())
+                .build();
+
+        SceneEntityInfo.Builder entityInfo = SceneEntityInfo.newBuilder()
+                .setEntityId(getId())
+                .setEntityType(ProtEntityType.PROT_ENTITY_TYPE_GADGET)
+                .setMotionInfo(MotionInfo.newBuilder().setPos(getPosition().toProto()).setRot(getRotation().toProto()).setSpeed(Vector.newBuilder()))
+                .addAnimatorParaList(AnimatorParameterValueInfoPair.newBuilder())
+                .setEntityClientData(EntityClientData.newBuilder())
+                .setEntityAuthorityInfo(authority)
+                .setLifeState(1);
+
+        PropPair pair = PropPair.newBuilder()
+                .setType(PlayerProperty.PROP_LEVEL.getId())
+                .setPropValue(ProtoHelper.newPropValue(PlayerProperty.PROP_LEVEL, 1))
+                .build();
+        entityInfo.addPropList(pair);
+
+        SceneGadgetInfo.Builder gadgetInfo = SceneGadgetInfo.newBuilder()
+                .setGadgetId(this.getGadgetId())
+                .setGroupId(this.getGroupId())
+                .setConfigId(this.getConfigId())
+                .setGadgetState(this.getState())
+                .setIsEnableInteract(true)
+                .setAuthorityPeerId(this.getScene().getWorld().getHostPeerId());
+
+        if (this.getGadgetData().getType() == EntityType.Worktop && this.getWorktopOptions() != null) {
+            WorktopInfo worktop = WorktopInfo.newBuilder()
+                    .addAllOptionList(this.getWorktopOptions())
+                    .build();
+            gadgetInfo.setWorktop(worktop);
+        }
+
+        entityInfo.setGadget(gadgetInfo);
+
+        return entityInfo.build();
+    }
+
+    public void die() {
+        getScene().broadcastPacket(new PacketLifeStateChangeNotify(this, LifeState.LIFE_DEAD));
+        this.onDeath(0);
+    }
 }
