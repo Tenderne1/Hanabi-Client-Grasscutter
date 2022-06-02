@@ -1,4 +1,4 @@
-package emu.grasscutter.data.def;
+package emu.grasscutter.data.excels;
 
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.GameResource;
@@ -7,40 +7,40 @@ import emu.grasscutter.game.trigger.enums.Trigger;
 
 @ResourceType(name = {"AchievementExcelConfigData.json"})
 public class AchievementData extends GameResource {
-    private int Id;
-    private ShowType IsShow;
-    private int FinishRewardId;
-    private AchievementTriggerConfig TriggerConfig;
-    private boolean IsDeleteWatcherAfterFinish;
-    private int Progress;
-    private boolean IsDisuse;
+    private int id;
+    private ShowType isShow;
+    private int finishRewardId;
+    private AchievementTriggerConfig triggerConfig;
+    private boolean isDeleteWatcherAfterFinish;
+    private int progress;
+    private boolean isDisuse;
 
     public int getId() {
-        return Id;
+        return id;
     }
 
     public ShowType getIsShow() {
-        return IsShow;
+        return isShow;
     }
 
     public int getFinishRewardId() {
-        return FinishRewardId;
+        return finishRewardId;
     }
 
     public int getProgress() {
-        return Progress;
+        return progress;
     }
 
     public boolean getIsDisuse() {
-        return IsDisuse;
+        return isDisuse;
     }
 
     public AchievementTriggerConfig getTriggerConfig() {
-        return TriggerConfig;
+        return triggerConfig;
     }
 
     public boolean getIsDeleteWatcherAfterFinish() {
-        return IsDeleteWatcherAfterFinish;
+        return isDeleteWatcherAfterFinish;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package emu.grasscutter.server.packet.send;
 
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.AchievementData;
+import emu.grasscutter.data.excels.AchievementData;
 import emu.grasscutter.net.packet.BasePacket;
 import emu.grasscutter.net.packet.PacketOpcodes;
 import emu.grasscutter.net.proto.AchievementAllDataNotifyOuterClass.AchievementAllDataNotify;

@@ -3,7 +3,7 @@ package emu.grasscutter.game.player;
 import dev.morphia.annotations.Transient;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.AchievementData;
+import emu.grasscutter.data.excels.AchievementData;
 import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.trigger.enums.Trigger;
 import emu.grasscutter.game.trigger.events.AchievementTriggerEvent;

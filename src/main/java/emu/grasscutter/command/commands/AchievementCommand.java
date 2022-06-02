@@ -3,7 +3,7 @@ package emu.grasscutter.command.commands;
 import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.AchievementData;
+import emu.grasscutter.data.excels.AchievementData;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.player.PlayerAchievementInfo;
 import emu.grasscutter.game.quest.GameQuest;
