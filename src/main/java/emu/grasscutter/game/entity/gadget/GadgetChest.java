@@ -11,7 +11,7 @@ import emu.grasscutter.net.proto.SceneGadgetInfoOuterClass.SceneGadgetInfo;
 import emu.grasscutter.scripts.constants.ScriptGadgetState;
 import emu.grasscutter.server.packet.send.PacketGadgetInteractRsp;
 
-import static emu.grasscutter.net.proto.InterOpTypeOuterClass.InterOpType.INTER_OP_START;
+import static emu.grasscutter.net.proto.InterOpTypeOuterClass.InterOpType.INTER_OP_TYPE_START;
 
 public class GadgetChest extends GadgetContent {
 	
@@ -27,8 +27,8 @@ public class GadgetChest extends GadgetContent {
 			return false;
 		}
 
-		if(opType == INTER_OP_START && handler.isTwoStep()){
-			player.sendPacket(new PacketGadgetInteractRsp(getGadget(), InteractType.INTERACT_OPEN_CHEST, INTER_OP_START));
+		if(opType == INTER_OP_TYPE_START && handler.isTwoStep()){
+			player.sendPacket(new PacketGadgetInteractRsp(getGadget(), InteractType.INTERACT_TYPE_OPEN_CHEST, INTER_OP_TYPE_START));
 			return false;
 		}else{
 			var success = handler.onInteract(this, player);
@@ -37,7 +37,7 @@ public class GadgetChest extends GadgetContent {
 			}
 
 			getGadget().updateState(ScriptGadgetState.ChestOpened);
-			player.sendPacket(new PacketGadgetInteractRsp(this.getGadget(), InteractTypeOuterClass.InteractType.INTERACT_OPEN_CHEST));
+			player.sendPacket(new PacketGadgetInteractRsp(this.getGadget(), InteractType.INTERACT_TYPE_OPEN_CHEST));
 			// let the chest disappear
 			getGadget().die();
 			return true;

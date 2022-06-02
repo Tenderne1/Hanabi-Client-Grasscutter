@@ -4,7 +4,6 @@ import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.common.PropGrowCurve;
 import emu.grasscutter.data.excels.MonsterCurveData;
 import emu.grasscutter.data.excels.MonsterData;
-import emu.grasscutter.game.dungeons.DungeonChallenge;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.props.EntityIdType;
 import emu.grasscutter.game.props.FightProperty;
@@ -136,7 +135,7 @@ public class EntityMonster extends GameEntity {
 		}
 		// first set the challenge data
 		if (getScene().getChallenge() != null && getScene().getChallenge().getGroup().id == this.getGroupId()) {
-			getScene().getChallenge().onMonsterDie(this);
+			getScene().getChallenge().onMonsterDeath(this);
 		}
 		if (getScene().getScriptManager().isInit() && this.getGroupId() > 0) {
 			if(getScene().getScriptManager().getScriptMonsterSpawnService() != null){

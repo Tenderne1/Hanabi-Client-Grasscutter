@@ -15,11 +15,11 @@ public class GadgetRewardStatue extends GadgetContent {
 	}
 
 	public boolean onInteract(Player player, InterOpTypeOuterClass.InterOpType opType) {
-		if (player.getScene().getChallenge() != null && player.getScene().getChallenge() instanceof DungeonChallenge dungeonChallenge) {
-			dungeonChallenge.getStatueDrops(player);
+		if (player.getScene().getChallenge() != null) {
+			player.getScene().getChallenge().getStatueDrops(player);
 		}
 		
-		player.sendPacket(new PacketGadgetInteractRsp(getGadget(), InteractType.INTERACT_OPEN_STATUE));
+		player.sendPacket(new PacketGadgetInteractRsp(getGadget(), InteractType.INTERACT_TYPE_OPEN_STATUE));
 		
 		return false;
 	}

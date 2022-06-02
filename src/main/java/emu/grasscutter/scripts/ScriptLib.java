@@ -255,7 +255,8 @@ public class ScriptLib {
 			dungeonChallenge.setStage(getSceneScriptManager().getVariables().getOrDefault("stage", -1) == 0);
 		}
 
-		getSceneScriptManager().getScene().setChallenge(challenge);
+		assert challenge instanceof DungeonChallenge;
+		getSceneScriptManager().getScene().setChallenge((DungeonChallenge) challenge);
 		challenge.start();
 		return 0;
 	}

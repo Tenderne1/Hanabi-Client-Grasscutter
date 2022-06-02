@@ -17,6 +17,7 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.quest.GameMainQuest;
+import emu.grasscutter.scripts.data.SuiteIndex;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -290,5 +291,16 @@ public final class DatabaseHelper {
 	
 	public static boolean deleteQuest(GameMainQuest quest) {
 		return DatabaseManager.getGameDatastore().delete(quest).wasAcknowledged();
+	}
+
+	public static void saveSuiteIndex(SuiteIndex suiteIndex){
+		DatabaseManager.getGameDatastore().save(suiteIndex);
+	}
+
+	public static SuiteIndex getSuiteIndex(SuiteIndex suiteIndex){
+		return DatabaseManager.getGameDatastore().find(SuiteIndex.class).
+				filter(Filters.eq("ownerUid", suiteIndex.getOwnerUid())).
+				filter(Filters.eq("groupId", suiteIndex.getGroupId())).
+				filter(Filters.eq("sceneId", suiteIndex.getSceneId())).first();
 	}
 }

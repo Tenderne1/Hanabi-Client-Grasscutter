@@ -1,7 +1,9 @@
 package emu.grasscutter.utils;
 
+import java.io.Serial;
 import java.io.Serializable;
 
+import com.github.davidmoten.rtreemulti.geometry.Point;
 import com.google.gson.annotations.SerializedName;
 
 import dev.morphia.annotations.Entity;
@@ -9,29 +11,30 @@ import emu.grasscutter.net.proto.VectorOuterClass.Vector;
 
 @Entity
 public class Position implements Serializable {
+	@Serial
 	private static final long serialVersionUID = -2001232313615923575L;
-	
+
 	@SerializedName(value="x", alternate={"_x", "X"})
 	private float x;
-	
+
 	@SerializedName(value="y", alternate={"_y", "Y"})
 	private float y;
-	
+
 	@SerializedName(value="z", alternate={"_z", "Z"})
 	private float z;
-	
+
 	public Position() {
 
 	}
-	
+
 	public Position(float x, float y) {
 		set(x, y);
 	}
-	
+
 	public Position(float x, float y, float z) {
 		set(x, y, z);
 	}
-	
+
 	public Position(String p) {
 		String[] split = p.split(",");
 		if (split.length >= 2) {
@@ -42,7 +45,7 @@ public class Position implements Serializable {
 			this.z = Float.parseFloat(split[2]);
 		}
 	}
-	
+
 	public Position(Vector vector) {
 		this.set(vector);
 	}
@@ -66,7 +69,7 @@ public class Position implements Serializable {
 	public void setZ(float z) {
 		this.z = z;
 	}
-	
+
 	public float getY() {
 		return y;
 	}
@@ -74,22 +77,22 @@ public class Position implements Serializable {
 	public void setY(float y) {
 		this.y = y;
 	}
-	
+
 	public Position set(float x, float y) {
 		this.x = x;
 		this.y = y;
 		return this;
 	}
-	
+
 	// Deep copy
 	public Position set(Position pos) {
 		return this.set(pos.getX(), pos.getY(), pos.getZ());
 	}
-	
+
 	public Position set(Vector pos) {
 		return this.set(pos.getX(), pos.getY(), pos.getZ());
 	}
-	
+
 	public Position set(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
@@ -103,17 +106,17 @@ public class Position implements Serializable {
 		this.z += add.getZ();
 		return this;
 	}
-	
+
 	public Position addX(float d) {
 		this.x += d;
 		return this;
 	}
-	
+
 	public Position addY(float d) {
 		this.y += d;
 		return this;
 	}
-	
+
 	public Position addZ(float d) {
 		this.z += d;
 		return this;
@@ -125,7 +128,7 @@ public class Position implements Serializable {
 		this.z -= sub.getZ();
 		return this;
 	}
-	
+
 	/** In radians
 	 * */
 	public Position translate(float dist, float angle) {
@@ -137,14 +140,14 @@ public class Position implements Serializable {
 	public boolean equal2d(Position other) {
 		return getX() == other.getX() && getY() == other.getY();
 	}
-	
+
 	public Position translateWithDegrees(float dist, float angle) {
 		angle = (float) Math.toRadians(angle);
 		this.x += dist * Math.sin(angle);
 		this.y += -dist * Math.cos(angle);
 		return this;
 	}
-	
+
 	@Override
 	public Position clone() {
 		return new Position(x, y, z);
@@ -154,12 +157,29 @@ public class Position implements Serializable {
 	public String toString() {
 		return "(" + this.getX() + ", " + this.getY() + ", " + this.getZ() + ")";
 	}
-	
+
 	public Vector toProto() {
 		return Vector.newBuilder()
-			.setX(this.getX())
-			.setY(this.getY())
-			.setZ(this.getZ())
-			.build();
+				.setX(this.getX())
+				.setY(this.getY())
+				.setZ(this.getZ())
+				.build();
+	}
+
+	public Point toPoint(){
+		return Point.create(x,y,z);
+	}
+
+	/**
+	 * To XYZ array for Spatial Index
+	 */
+	public double[] toDoubleArray(){
+		return new double[]{ x, y, z};
+	}
+	/**
+	 * To XZ array for Spatial Index (Blocks)
+	 */
+	public double[] toXZDoubleArray(){
+		return new double[]{x, z};
 	}
 }

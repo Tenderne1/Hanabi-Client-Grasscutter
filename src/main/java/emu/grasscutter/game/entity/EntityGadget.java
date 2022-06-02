@@ -5,8 +5,10 @@ import java.util.List;
 
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.excels.GadgetData;
+import emu.grasscutter.game.entity.gadget.*;
 import emu.grasscutter.game.props.EntityIdType;
 import emu.grasscutter.game.props.EntityType;
+import emu.grasscutter.game.props.LifeState;
 import emu.grasscutter.game.props.PlayerProperty;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.game.world.World;
@@ -24,6 +26,11 @@ import emu.grasscutter.net.proto.SceneEntityInfoOuterClass.SceneEntityInfo;
 import emu.grasscutter.net.proto.SceneGadgetInfoOuterClass.SceneGadgetInfo;
 import emu.grasscutter.net.proto.VectorOuterClass.Vector;
 import emu.grasscutter.net.proto.WorktopInfoOuterClass.WorktopInfo;
+import emu.grasscutter.scripts.constants.EventType;
+import emu.grasscutter.scripts.data.SceneGadget;
+import emu.grasscutter.scripts.data.ScriptArgs;
+import emu.grasscutter.server.packet.send.PacketGadgetStateNotify;
+import emu.grasscutter.server.packet.send.PacketLifeStateChangeNotify;
 import emu.grasscutter.utils.Position;
 import emu.grasscutter.utils.ProtoHelper;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
@@ -39,7 +46,12 @@ public class EntityGadget extends EntityBaseGadget {
 	private int gadgetId;
 	
 	private int state;
+	private int pointType;
+	private GadgetContent content;
+	private SceneGadget metaGadget;
+
 	private IntSet worktopOptions;
+
 
 	public EntityGadget(Scene scene, int gadgetId, Position pos) {
 		super(scene);
@@ -82,6 +94,12 @@ public class EntityGadget extends EntityBaseGadget {
 		this.state = state;
 	}
 
+	public void updateState(int state){
+		this.setState(state);
+		this.getScene().broadcastPacket(new PacketGadgetStateNotify(this, state));
+		getScene().getScriptManager().callEvent(EventType.EVENT_GADGET_STATE_CHANGE, new ScriptArgs(state, this.getConfigId()));
+	}
+
 	public IntSet getWorktopOptions() {
 		return worktopOptions;
 	}
@@ -92,7 +110,44 @@ public class EntityGadget extends EntityBaseGadget {
 		}
 		Arrays.stream(options).forEach(this.worktopOptions::add);
 	}
-	
+
+	public int getPointType() {
+		return pointType;
+	}
+
+	public void setPointType(int pointType) {
+		this.pointType = pointType;
+	}
+
+	public GadgetContent getContent() {
+		return content;
+	}
+
+	public SceneGadget getMetaGadget() {
+		return metaGadget;
+	}
+
+	public void setMetaGadget(SceneGadget metaGadget) {
+		this.metaGadget = metaGadget;
+	}
+
+	public void buildContent() {
+		if (getContent() != null || getGadgetData() == null || getGadgetData().getType() == null) {
+			return;
+		}
+
+		EntityType type = getGadgetData().getType();
+		GadgetContent content = switch (type) {
+			case GatherPoint -> new GadgetGatherPoint(this);
+			case Worktop -> new GadgetWorktop(this);
+			case RewardStatue -> new GadgetRewardStatue(this);
+			case Chest -> new GadgetChest(this);
+			default -> null;
+		};
+
+		this.content = content;
+	}
+
 	public void removeWorktopOption(int option) {
 		if (this.worktopOptions == null) {
 			return;
@@ -153,5 +208,10 @@ public class EntityGadget extends EntityBaseGadget {
 		entityInfo.setGadget(gadgetInfo);
 		
 		return entityInfo.build();
+	}
+
+	public void die() {
+		getScene().broadcastPacket(new PacketLifeStateChangeNotify(this, LifeState.LIFE_DEAD));
+		this.onDeath(0);
 	}
 }
