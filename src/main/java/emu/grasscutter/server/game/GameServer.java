@@ -19,7 +19,6 @@ import emu.grasscutter.game.quest.ServerQuestHandler;
 import emu.grasscutter.game.shop.ShopManager;
 import emu.grasscutter.game.tower.TowerScheduleManager;
 import emu.grasscutter.game.world.World;
-import emu.grasscutter.game.world.WorldDataManager;
 import emu.grasscutter.net.packet.PacketHandler;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
 import emu.grasscutter.netty.KcpServer;
@@ -58,14 +57,22 @@ public final class GameServer extends KcpServer {
 
 	private final CombineManger combineManger;
 	private final TowerScheduleManager towerScheduleManager;
-	private final WorldDataManager worldDataManager;
-	public GameServer() {
-		this(new InetSocketAddress(
-				GAME_INFO.bindAddress,
-				GAME_INFO.bindPort
-		));
+
+	private static InetSocketAddress getAdapterInetSocketAddress(){
+		InetSocketAddress inetSocketAddress = null;
+		if(GAME_INFO.bindAddress.equals("")){
+			inetSocketAddress=new InetSocketAddress(GAME_INFO.bindPort);
+		}else{
+			inetSocketAddress=new InetSocketAddress(
+					GAME_INFO.bindAddress,
+					GAME_INFO.bindPort
+			);
+		}
+		return inetSocketAddress;
 	}
-	
+	public GameServer() {
+		this(getAdapterInetSocketAddress());
+	}
 	public GameServer(InetSocketAddress address) {
 		super(address);
 
@@ -88,7 +95,6 @@ public final class GameServer extends KcpServer {
 		this.expeditionManager = new ExpeditionManager(this);
 		this.combineManger = new CombineManger(this);
 		this.towerScheduleManager = new TowerScheduleManager(this);
-		this.worldDataManager = new WorldDataManager(this);
 		// Hook into shutdown event.
 		Runtime.getRuntime().addShutdownHook(new Thread(this::onServerShutdown));
 	}
@@ -112,6 +118,7 @@ public final class GameServer extends KcpServer {
 	public ChatManagerHandler getChatManager() {
 		return chatManager;
 	}
+	
 	public void setChatManager(ChatManagerHandler chatManager) {
 		this.chatManager = chatManager;
 	}
@@ -156,10 +163,6 @@ public final class GameServer extends KcpServer {
 		return towerScheduleManager;
 	}
 
-	public WorldDataManager getWorldDataManager() {
-		return worldDataManager;
-	}
-
 	public TaskMap getTaskMap() {
 		return this.taskMap;
 	}
@@ -187,10 +190,15 @@ public final class GameServer extends KcpServer {
 		
 		// Check database if character isnt here
 		if (player == null) {
-			player = DatabaseHelper.getPlayerById(id);
+			player = DatabaseHelper.getPlayerByUid(id);
 		}
 		
 		return player;
+	}
+	
+	public Player getPlayerByAccountId(String accountId) {
+		Optional<Player> playerOpt = getPlayers().values().stream().filter(player -> player.getAccount().getId().equals(accountId)).findFirst();
+		return playerOpt.orElse(null);
 	}
 	
 	public SocialDetail.Builder getSocialDetailByUid(int id) {
@@ -211,23 +219,23 @@ public final class GameServer extends KcpServer {
 		}
 		return DatabaseHelper.getAccountByName(username);
 	}
-
-	public synchronized void onTick(){
+	
+	public void onTick() throws Exception {
 		Iterator<World> it = this.getWorlds().iterator();
 		while (it.hasNext()) {
 			World world = it.next();
-
+			
 			if (world.getPlayerCount() == 0) {
 				it.remove();
 			}
-
+			
 			world.onTick();
 		}
-
+		
 		for (Player player : this.getPlayers().values()) {
 			player.onTick();
 		}
-
+  
 		ServerTickEvent event = new ServerTickEvent(); event.call();
 	}
 	

@@ -1,29 +1,31 @@
 package emu.grasscutter.data;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
-import emu.grasscutter.data.custom.*;
-import emu.grasscutter.scripts.SceneIndexManager;
 import emu.grasscutter.utils.Utils;
-import lombok.SneakyThrows;
 import org.reflections.Reflections;
 
 import com.google.gson.JsonElement;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
 import emu.grasscutter.Grasscutter;
+import emu.grasscutter.data.binout.AbilityEmbryoEntry;
+import emu.grasscutter.data.binout.AbilityModifier;
+import emu.grasscutter.data.binout.AbilityModifierEntry;
+import emu.grasscutter.data.binout.MainQuestData;
+import emu.grasscutter.data.binout.OpenConfigEntry;
+import emu.grasscutter.data.binout.ScenePointEntry;
+import emu.grasscutter.data.binout.AbilityModifier.AbilityConfigData;
+import emu.grasscutter.data.binout.AbilityModifier.AbilityModifierAction;
+import emu.grasscutter.data.binout.AbilityModifier.AbilityModifierActionType;
 import emu.grasscutter.data.common.PointData;
 import emu.grasscutter.data.common.ScenePointConfig;
-import emu.grasscutter.data.custom.AbilityModifier.AbilityConfigData;
-import emu.grasscutter.data.custom.AbilityModifier.AbilityModifierAction;
-import emu.grasscutter.data.custom.AbilityModifier.AbilityModifierActionType;
 import emu.grasscutter.game.world.SpawnDataEntry.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
@@ -64,7 +66,6 @@ public class ResourceLoader {
 		loadQuests();
 		// Load scene points - must be done AFTER resources are loaded
 		loadScenePoints();
-		loadNpcBornData();
 		// Custom - TODO move this somewhere else
 		try {
 			GameData.getAvatarSkillDepotDataMap().get(504).setAbilities(
@@ -138,18 +139,14 @@ public class ResourceLoader {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	protected static void loadFromResource(Class<?> c, String fileName, Int2ObjectMap map) throws Exception {
-		FileReader fileReader = new FileReader(RESOURCE("ExcelBinOutput/" + fileName));
-		Gson gson = Grasscutter.getGsonFactory();
-		List list = gson.fromJson(fileReader, List.class);
+		try (FileReader fileReader = new FileReader(RESOURCE("ExcelBinOutput/" + fileName))) {
+			List list = Grasscutter.getGsonFactory().fromJson(fileReader, TypeToken.getParameterized(Collection.class, c).getType());
 
-		for (Object o : list) {
-			Map<String, Object> tempMap = Utils.switchPropertiesUpperLowerCase((Map<String, Object>) o, c);
-			GameResource res = gson.fromJson(gson.toJson(tempMap), TypeToken.get(c).getType());
-			res.onLoad();
-			if(map.containsKey(res.getId())) {
-				map.remove(res.getId());
+			for (Object o : list) {
+				GameResource res = (GameResource) o;
+				res.onLoad();
+				map.put(res.getId(), res);
 			}
-			map.put(res.getId(), res);
 		}
 	}
 
@@ -418,26 +415,6 @@ public class ResourceLoader {
 		Grasscutter.getLogger().info("Loaded " + GameData.getMainQuestDataMap().size() + " MainQuestDatas.");
 	}
 
-	@SneakyThrows
-	private static void loadNpcBornData(){
-		var folder = Files.list(Path.of(RESOURCE("BinOutput/Scene/SceneNpcBorn"))).toList();
-
-		for(var file : folder){
-			if(file.toFile().isDirectory()){
-				continue;
-			}
-
-			var data = Grasscutter.getGsonFactory().fromJson(Files.readString(file), SceneNpcBornData.class);
-			if(data.getBornPosList() == null || data.getBornPosList().size() == 0){
-				continue;
-			}
-
-			data.setIndex(SceneIndexManager.buildIndex(3, data.getBornPosList(), item -> item.getPos().toPoint()));
-			GameData.getSceneNpcBornData().put(data.getSceneId(), data);
-		}
-
-		Grasscutter.getLogger().info("Loaded " + GameData.getSceneNpcBornData().size() + " SceneNpcBornDatas.");
-	}
 	// BinOutput configs
 	
 	private static class AvatarConfig {
@@ -458,8 +435,14 @@ public class ResourceLoader {
 	public static class OpenConfigData {
 		public String $type;
 		public String abilityName;
+		
+		@SerializedName(value="talentIndex", alternate={"OJOFFKLNAHN"})
 		public int talentIndex;
+		
+		@SerializedName(value="skillID", alternate={"overtime"})
 		public int skillID;
+		
+		@SerializedName(value="pointDelta", alternate={"IGEBKIHPOIF"})
 		public int pointDelta;
 	}
 }

@@ -1,9 +1,9 @@
 package emu.grasscutter.game.world;
 
-import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.GameDepot;
-import emu.grasscutter.data.def.*;
+import emu.grasscutter.data.excels.*;
+import emu.grasscutter.game.dungeons.DungeonChallenge;
 import emu.grasscutter.game.dungeons.DungeonSettleListener;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.player.Player;
@@ -13,24 +13,24 @@ import emu.grasscutter.game.props.FightProperty;
 import emu.grasscutter.game.props.LifeState;
 import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.world.SpawnDataEntry.SpawnGroupEntry;
-import emu.grasscutter.game.dungeons.challenge.WorldChallenge;
 import emu.grasscutter.net.packet.BasePacket;
 import emu.grasscutter.net.proto.AttackResultOuterClass.AttackResult;
 import emu.grasscutter.net.proto.VisionTypeOuterClass.VisionType;
-import emu.grasscutter.scripts.SceneIndexManager;
 import emu.grasscutter.scripts.SceneScriptManager;
 import emu.grasscutter.scripts.data.SceneBlock;
-import emu.grasscutter.scripts.data.SceneGadget;
 import emu.grasscutter.scripts.data.SceneGroup;
-import emu.grasscutter.server.packet.send.*;
-import emu.grasscutter.utils.Position;
+import emu.grasscutter.server.packet.send.PacketAvatarSkillInfoNotify;
+import emu.grasscutter.server.packet.send.PacketDungeonChallengeFinishNotify;
+import emu.grasscutter.server.packet.send.PacketEntityFightPropUpdateNotify;
+import emu.grasscutter.server.packet.send.PacketLifeStateChangeNotify;
+import emu.grasscutter.server.packet.send.PacketSceneEntityAppearNotify;
+import emu.grasscutter.server.packet.send.PacketSceneEntityDisappearNotify;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.danilopianini.util.SpatialIndex;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Scene {
 	private final World world;
@@ -49,11 +49,12 @@ public class Scene {
 	private int weather;
 	
 	private SceneScriptManager scriptManager;
-	private WorldChallenge challenge;
+	private DungeonChallenge challenge;
 	private List<DungeonSettleListener> dungeonSettleListeners;
 	private DungeonData dungeonData;
 	private int prevScene; // Id of the previous scene
 	private int prevScenePoint;
+	
 	public Scene(World world, SceneData sceneData) {
 		this.world = world;
 		this.sceneData = sceneData;
@@ -197,11 +198,11 @@ public class Scene {
 		this.dungeonData = dungeonData;
 	}
 
-	public WorldChallenge getChallenge() {
+	public DungeonChallenge getChallenge() {
 		return challenge;
 	}
 
-	public void setChallenge(WorldChallenge challenge) {
+	public void setChallenge(DungeonChallenge challenge) {
 		this.challenge = challenge;
 	}
 
@@ -283,7 +284,7 @@ public class Scene {
 	private void removePlayerAvatars(Player player) {
 		Iterator<EntityAvatar> it = player.getTeamManager().getActiveTeam().iterator();
 		while (it.hasNext()) {
-			this.removeEntity(it.next(), VisionType.VISION_REMOVE);
+			this.removeEntity(it.next(), VisionType.VISION_TYPE_REMOVE);
 			it.remove();
 		}
 	}
@@ -309,7 +310,6 @@ public class Scene {
 	
 	private void addEntityDirectly(GameEntity entity) {
 		getEntities().put(entity.getId(), entity);
-		entity.onCreate(); // Call entity create event
 	}
 	
 	public synchronized void addEntity(GameEntity entity) {
@@ -320,21 +320,14 @@ public class Scene {
 	public synchronized void addEntityToSingleClient(Player player, GameEntity entity) {
 		this.addEntityDirectly(entity);
 		player.sendPacket(new PacketSceneEntityAppearNotify(entity));
-
-	}
-	public void addEntities(Collection<? extends GameEntity> entities){
-		addEntities(entities, VisionType.VISION_BORN);
 	}
 	
-	public synchronized void addEntities(Collection<? extends GameEntity> entities, VisionType visionType) {
-		if(entities == null || entities.isEmpty()){
-			return;
-		}
+	public synchronized void addEntities(Collection<GameEntity> entities) {
 		for (GameEntity entity : entities) {
 			this.addEntityDirectly(entity);
 		}
 		
-		this.broadcastPacket(new PacketSceneEntityAppearNotify(entities, visionType));
+		this.broadcastPacket(new PacketSceneEntityAppearNotify(entities, VisionType.VISION_TYPE_BORN));
 	}
 	
 	private GameEntity removeEntityDirectly(GameEntity entity) {
@@ -342,7 +335,7 @@ public class Scene {
 	}
 	
 	public void removeEntity(GameEntity entity) {
-		this.removeEntity(entity, VisionType.VISION_DIE);
+		this.removeEntity(entity, VisionType.VISION_TYPE_DIE);
 	}
 	
 	public synchronized void removeEntity(GameEntity entity, VisionType visionType) {
@@ -351,21 +344,14 @@ public class Scene {
 			this.broadcastPacket(new PacketSceneEntityDisappearNotify(removed, visionType));
 		}
 	}
-	public synchronized void removeEntities(List<GameEntity> entity, VisionType visionType) {
-		var toRemove = entity.stream()
-				.map(this::removeEntityDirectly)
-				.toList();
-		if (toRemove.size() > 0) {
-			this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, visionType));
-		}
-	}
+	
 	public synchronized void replaceEntity(EntityAvatar oldEntity, EntityAvatar newEntity) {
 		this.removeEntityDirectly(oldEntity);
 		this.addEntityDirectly(newEntity);
-		this.broadcastPacket(new PacketSceneEntityDisappearNotify(oldEntity, VisionType.VISION_REPLACE));
-		this.broadcastPacket(new PacketSceneEntityAppearNotify(newEntity, VisionType.VISION_REPLACE, oldEntity.getId()));
+		this.broadcastPacket(new PacketSceneEntityDisappearNotify(oldEntity, VisionType.VISION_TYPE_REPLACE));
+		this.broadcastPacket(new PacketSceneEntityAppearNotify(newEntity, VisionType.VISION_TYPE_REPLACE, oldEntity.getId()));
 	}
-
+	
 	public void showOtherEntities(Player player) {
 		List<GameEntity> entities = new LinkedList<>();
 		GameEntity currentEntity = player.getTeamManager().getCurrentAvatarEntity();
@@ -376,8 +362,8 @@ public class Scene {
 			}
 			entities.add(entity);
 		}
-
-		player.sendPacket(new PacketSceneEntityAppearNotify(entities, VisionType.VISION_MEET));
+		
+		player.sendPacket(new PacketSceneEntityAppearNotify(entities, VisionType.VISION_TYPE_MEET));
 	}
 	
 	public void handleAttack(AttackResult result) {
@@ -400,6 +386,19 @@ public class Scene {
 	}
 	
 	public void killEntity(GameEntity target, int attackerId) {
+		GameEntity attacker = getEntityById(attackerId);
+
+		//Check codex
+		if (attacker instanceof EntityClientGadget) {
+			var clientGadgetOwner = getEntityById(((EntityClientGadget) attacker).getOwnerEntityId());
+			if(clientGadgetOwner instanceof EntityAvatar) {
+				((EntityClientGadget) attacker).getOwner().getCodex().checkAnimal(target, CodexAnimalData.CodexAnimalUnlockCondition.CODEX_COUNT_TYPE_KILL);
+			}
+		}
+		else if (attacker instanceof EntityAvatar) {
+			((EntityAvatar) attacker).getPlayer().getCodex().checkAnimal(target, CodexAnimalData.CodexAnimalUnlockCondition.CODEX_COUNT_TYPE_KILL);
+		}
+
 		// Packet
 		this.broadcastPacket(new PacketLifeStateChangeNotify(attackerId, target, LifeState.LIFE_DEAD));
 
@@ -413,7 +412,7 @@ public class Scene {
 		// Death event
 		target.onDeath(attackerId);
 	}
-
+	
 	public void onTick() {
 		if (this.getScriptManager().isInit()) {
 			this.checkBlocks();
@@ -421,12 +420,9 @@ public class Scene {
 			// TEMPORARY
 			this.checkSpawns();
 		}
+		
 		// Triggers
-		this.scriptManager.checkRegions();
-
-		if(challenge != null){
-			challenge.onCheckTimeOut();
-		}
+		this.getScriptManager().onTick();
 	}
 	
 	// TODO - Test
@@ -491,159 +487,90 @@ public class Scene {
 		
 		if (toAdd.size() > 0) {
 			toAdd.stream().forEach(this::addEntityDirectly);
-			this.broadcastPacket(new PacketSceneEntityAppearNotify(toAdd, VisionType.VISION_BORN));
+			this.broadcastPacket(new PacketSceneEntityAppearNotify(toAdd, VisionType.VISION_TYPE_BORN));
 		}
 		if (toRemove.size() > 0) {
 			toRemove.stream().forEach(this::removeEntityDirectly);
-			this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_REMOVE));
+			this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
 		}
 	}
-
-	public List<SceneBlock> getPlayerActiveBlocks(Player player){
-		// consider the borders' entities of blocks, so we check if contains by index
-		return SceneIndexManager.queryNeighbors(getScriptManager().getBlocksIndex(),
-				player.getPos().toXZDoubleArray(), Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
-	}
+	
 	public void checkBlocks() {
 		Set<SceneBlock> visible = new HashSet<>();
+		
 		for (Player player : this.getPlayers()) {
-			var blocks = getPlayerActiveBlocks(player);
-			visible.addAll(blocks);
+			for (SceneBlock block : getScriptManager().getBlocks()) {
+				if (!block.contains(player.getPos())) {
+					continue;
+				}
+				
+				visible.add(block);
+			}
 		}
-
+		
 		Iterator<SceneBlock> it = this.getLoadedBlocks().iterator();
 		while (it.hasNext()) {
 			SceneBlock block = it.next();
-
+			
 			if (!visible.contains(block)) {
 				it.remove();
-
+				
 				onUnloadBlock(block);
 			}
 		}
-
-		for(var block : visible){
+		
+		for (SceneBlock block : visible) {
 			if (!this.getLoadedBlocks().contains(block)) {
-				this.onLoadBlock(block, this.getPlayers());
+				this.onLoadBlock(block);
 				this.getLoadedBlocks().add(block);
-			}else{
-				// dynamic load the groups for players in a loaded block
-				var toLoad = this.getPlayers().stream()
-						.filter(p -> block.contains(p.getPos()))
-						.map(p -> playerMeetGroups(p, block))
-						.flatMap(Collection::stream)
-						.toList();
-				onLoadGroup(toLoad);
-			}
-			for (Player player : this.getPlayers()) {
-				getScriptManager().meetEntities(loadNpcForPlayer(player, block));
 			}
 		}
-
 	}
-	public List<SceneGroup> playerMeetGroups(Player player, SceneBlock block){
-		List<SceneGroup> sceneGroups = SceneIndexManager.queryNeighbors(block.sceneGroupIndex, player.getPos().toDoubleArray(),
-				Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
-
-		List<SceneGroup> groups = sceneGroups.stream()
-				.filter(group -> !scriptManager.getLoadedGroupSetPerBlock().get(block.id).contains(group))
-				.peek(group -> scriptManager.getLoadedGroupSetPerBlock().get(block.id).add(group))
-				.toList();
-
-		if (groups.size() == 0) {
-			return List.of();
-		}
-
-		return groups;
-	}
-	public void onLoadBlock(SceneBlock block, List<Player> players) {
-		this.getScriptManager().loadBlockFromScript(block);
-		scriptManager.getLoadedGroupSetPerBlock().put(block.id , new HashSet<>());
-
-		// the groups form here is not added in current scene
-		var groups = players.stream()
-				.filter(player -> block.contains(player.getPos()))
-				.map(p -> playerMeetGroups(p, block))
-				.flatMap(Collection::stream)
-				.toList();
-
-		onLoadGroup(groups);
-		Grasscutter.getLogger().info("Scene {} Block {} loaded.", this.getId(), block.id);
-	}
-
-	public void onLoadGroup(List<SceneGroup> groups){
-		if(groups == null || groups.isEmpty()){
-			return;
-		}
-		for (SceneGroup group : groups) {
+	
+	// TODO optimize
+	public void onLoadBlock(SceneBlock block) {
+		for (SceneGroup group : block.groups) {
 			// We load the script files for the groups here
-			this.getScriptManager().loadGroupFromScript(group);
+			if (!group.isLoaded()) {
+				this.getScriptManager().loadGroupFromScript(group);
+			}
+			
+			group.triggers.forEach(getScriptManager()::registerTrigger);
+			group.regions.forEach(getScriptManager()::registerRegion);
 		}
-
+		
 		// Spawn gadgets AFTER triggers are added
 		// TODO
-		var entities = new ArrayList<GameEntity>();
-		for (SceneGroup group : groups) {
+		for (SceneGroup group : block.groups) {
 			if (group.init_config == null) {
 				continue;
 			}
 			
-			// Load garbages
-			List<SceneGadget> garbageGadgets = group.getGarbageGadgets();
-			
-			if (garbageGadgets != null) {
-				entities.addAll(garbageGadgets.stream().map(g -> scriptManager.createGadget(group.id, group.block_id, g))
-						.filter(Objects::nonNull)
-						.toList());
-			}
-
-			// Load suites
 			int suite = group.init_config.suite;
-
-			if (suite == 0 || group.suites == null || group.suites.size() == 0) {
+			
+			if (suite == 0) {
 				continue;
 			}
-
-			// just load the 'init' suite, avoid spawn the suite added by AddExtraGroupSuite etc.
-			var suiteData = group.getSuiteByIndex(suite);
-			suiteData.sceneTriggers.forEach(getScriptManager()::registerTrigger);
-
-			entities.addAll(suiteData.sceneGadgets.stream()
-					.map(g -> scriptManager.createGadget(group.id, group.block_id, g))
-					.filter(Objects::nonNull)
-					.toList());
-			entities.addAll(suiteData.sceneMonsters.stream()
-					.map(mob -> scriptManager.createMonster(group.id, group.block_id, mob))
-					.filter(Objects::nonNull)
-					.toList());
-
+			
+			do {
+				this.getScriptManager().spawnGadgetsInGroup(group, suite);
+				suite++;
+			} while (suite < group.init_config.end_suite);
 		}
-
-		scriptManager.meetEntities(entities);
-		//scriptManager.callEvent(EventType.EVENT_GROUP_LOAD, null);
-		//groups.forEach(g -> scriptManager.callEvent(EventType.EVENT_GROUP_LOAD, null));
-		Grasscutter.getLogger().info("Scene {} loaded {} group(s)", this.getId(), groups.size());
 	}
 	
 	public void onUnloadBlock(SceneBlock block) {
-		List<GameEntity> toRemove = this.getEntities().values().stream()
-				.filter(e -> e.getBlockId() == block.id).toList();
+		List<GameEntity> toRemove = this.getEntities().values().stream().filter(e -> e.getBlockId() == block.id).toList();
 
 		if (toRemove.size() > 0) {
-			toRemove.forEach(this::removeEntityDirectly);
-			this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_REMOVE));
+			toRemove.stream().forEach(this::removeEntityDirectly);
+			this.broadcastPacket(new PacketSceneEntityDisappearNotify(toRemove, VisionType.VISION_TYPE_REMOVE));
 		}
 		
-		for (SceneGroup group : block.groups.values()) {
-			if(group.triggers != null){
-				group.triggers.values().forEach(getScriptManager()::deregisterTrigger);
-			}
-			if(group.regions != null){
-				group.regions.forEach(getScriptManager()::deregisterRegion);
-			}
+		for (SceneGroup group : block.groups) {
+			group.triggers.forEach(getScriptManager()::deregisterTrigger);
+			group.regions.forEach(getScriptManager()::deregisterRegion);
 		}
-		scriptManager.getLoadedGroupSetPerBlock().remove(block.id);
-		Grasscutter.getLogger().info("Scene {} Block {} is unloaded.", this.getId(), block.id);
 	}
 	
 	// Gadgets
@@ -682,7 +609,7 @@ public class Scene {
 			return;
 		}
 		
-		this.broadcastPacketToOthers(gadget.getOwner(), new PacketSceneEntityDisappearNotify(gadget, VisionType.VISION_DIE));
+		this.broadcastPacketToOthers(gadget.getOwner(), new PacketSceneEntityDisappearNotify(gadget, VisionType.VISION_TYPE_DIE));
 	}
 
 	// Broadcasting
@@ -707,66 +634,5 @@ public class Scene {
     		// Send
     		player.getSession().send(packet);
     	}
-	}
-
-	public void addItemEntity(int itemId, int amount, GameEntity bornForm){
-		ItemData itemData = GameData.getItemDataMap().get(itemId);
-		if (itemData == null) {
-			return;
-		}
-		if (itemData.isEquip()) {
-			float range = (3f + (.1f * amount));
-			for (int i = 0; i < amount; i++) {
-				Position pos = bornForm.getPosition().clone().addX((float) (Math.random() * range) - (range / 2)).addZ((float) (Math.random() * range) - (range / 2)).addZ(.9f);
-				EntityItem entity = new EntityItem(this, null, itemData, pos, 1);
-				addEntity(entity);
-			}
-		} else {
-			EntityItem entity = new EntityItem(this, null, itemData, bornForm.getPosition().clone().addZ(.9f), amount);
-			addEntity(entity);
-		}
-	}
-	public List<EntityNPC> loadNpcForPlayer(Player player, SceneBlock block){
-		if(!block.contains(player.getPos())){
-			return List.of();
-		}
-
-		var pos = player.getPos();
-		var data = GameData.getSceneNpcBornData().get(getId());
-		if(data == null){
-			return List.of();
-		}
-
-		var npcs = SceneIndexManager.queryNeighbors(data.getIndex(), pos.toDoubleArray(),
-				Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
-		var entityNPCS = npcs.stream().map(item -> {
-					var group = data.getGroups().get(item.getGroupId());
-					if(group == null){
-						group = SceneGroup.of(item.getGroupId());
-						data.getGroups().putIfAbsent(item.getGroupId(), group);
-						group.load(getId());
-					}
-
-					if(group.npc == null){
-						return null;
-					}
-					var npc = group.npc.get(item.getConfigId());
-					if(npc == null){
-						return null;
-					}
-
-					return getScriptManager().createNPC(npc, block.id, item.getSuiteIdList().get(0));
-				})
-				.filter(Objects::nonNull)
-				.filter(item -> getEntities().values().stream()
-						.filter(e -> e instanceof EntityNPC)
-						.noneMatch(e -> e.getConfigId() == item.getConfigId()))
-				.toList();
-
-		if(entityNPCS.size() > 0){
-			broadcastPacket(new PacketGroupSuiteNotify(entityNPCS));
-		}
-
-		return entityNPCS;
 	}
 }

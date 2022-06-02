@@ -4,10 +4,10 @@ import emu.grasscutter.Grasscutter;
 import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.AvatarData;
-import emu.grasscutter.data.def.GadgetData;
-import emu.grasscutter.data.def.ItemData;
-import emu.grasscutter.data.def.MonsterData;
+import emu.grasscutter.data.excels.AvatarData;
+import emu.grasscutter.data.excels.GadgetData;
+import emu.grasscutter.data.excels.ItemData;
+import emu.grasscutter.data.excels.MonsterData;
 import emu.grasscutter.game.avatar.Avatar;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.player.Player;
@@ -20,6 +20,7 @@ import javax.swing.text.html.parser.Entity;
 import java.util.List;
 import java.util.Random;
 
+import static emu.grasscutter.Configuration.*;
 import static emu.grasscutter.utils.Language.translate;
 
 @Command(label = "spawn", usage = "spawn <entityId> [amount] [level(monster only)]", permission = "server.spawn", permissionTargeted = "server.spawn.others", description = "commands.spawn.description")
@@ -27,11 +28,6 @@ public final class SpawnCommand implements CommandHandler {
 
     @Override
     public void execute(Player sender, Player targetPlayer, List<String> args) {
-        if (targetPlayer == null) {
-            CommandHandler.sendMessage(sender, translate(sender, "commands.execution.need_target"));
-            return;
-        }
-
         int id = 0;  // This is just to shut up the linter, it's not a real default
         int amount = 1;
         int level = 1;
@@ -59,7 +55,7 @@ public final class SpawnCommand implements CommandHandler {
                 CommandHandler.sendMessage(sender, translate(sender, "commands.spawn.usage"));
                 return;
         }
-
+        
         MonsterData monsterData = GameData.getMonsterDataMap().get(id);
         GadgetData gadgetData = GameData.getGadgetDataMap().get(id);
         ItemData itemData = GameData.getItemDataMap().get(id);
@@ -67,7 +63,16 @@ public final class SpawnCommand implements CommandHandler {
             CommandHandler.sendMessage(sender, translate(sender, "commands.generic.invalid.entityId"));
             return;
         }
+       
         Scene scene = targetPlayer.getScene();
+        
+        if (scene.getEntities().size() + amount > GAME_OPTIONS.sceneEntityLimit) {
+        	amount = Math.max(Math.min(GAME_OPTIONS.sceneEntityLimit - scene.getEntities().size(), amount), 0);
+        	CommandHandler.sendMessage(sender, translate(sender, "commands.spawn.limit_reached", amount));
+        	if (amount <= 0) {
+        		return;
+        	}
+        }
 
         double maxRadius = Math.sqrt(amount * 0.2 / Math.PI);
         for (int i = 0; i < amount; i++) {
