@@ -15,6 +15,7 @@ import emu.grasscutter.game.props.ClimateType;
 import emu.grasscutter.game.props.FightProperty;
 import emu.grasscutter.game.props.LifeState;
 import emu.grasscutter.game.props.SceneType;
+import emu.grasscutter.game.trigger.enums.Trigger;
 import emu.grasscutter.game.world.SpawnDataEntry.SpawnGroupEntry;
 import emu.grasscutter.net.packet.BasePacket;
 import emu.grasscutter.net.proto.AttackResultOuterClass.AttackResult;
@@ -386,20 +387,31 @@ public class Scene {
 	}
 	
 	public void handleAttack(AttackResult result) {
-		//GameEntity attacker = getEntityById(result.getAttackerId());
+		GameEntity attacker = getEntityById(result.getAttackerId());
 		GameEntity target = getEntityById(result.getDefenseId());
-		
+
 		if (target == null) {
 			return;
 		}
-		
+
 		// Godmode check
 		if (target instanceof EntityAvatar) {
 			if (((EntityAvatar) target).getPlayer().inGodmode()) {
 				return;
 			}
 		}
-		
+
+		if (result.getIsCrit()) {
+			if (attacker instanceof EntityClientGadget) {
+				var clientGadgetOwner = getEntityById(((EntityClientGadget) attacker).getOwnerEntityId());
+				if(clientGadgetOwner instanceof EntityAvatar) {
+					((EntityClientGadget) attacker).getOwner().getTriggerManager().triggerEvent(Trigger.TRIGGER_MAX_CRITICAL_DAMAGE, result.getDamage());
+				}
+			} else if (attacker instanceof EntityAvatar) {
+				((EntityAvatar) attacker).getPlayer().getTriggerManager().triggerEvent(Trigger.TRIGGER_MAX_CRITICAL_DAMAGE, result.getDamage());
+			}
+		}
+
 		// Sanity check
 		target.damage(result.getDamage(), result.getAttackerId());
 	}
@@ -416,6 +428,18 @@ public class Scene {
 		}
 		else if (attacker instanceof EntityAvatar) {
 			((EntityAvatar) attacker).getPlayer().getCodex().checkAnimal(target, CodexAnimalData.CodexAnimalUnlockCondition.CODEX_COUNT_TYPE_KILL);
+		}
+
+		//Trigger TRIGGER_KILLED_BY_CERTAIN_MONSTER
+		if(target instanceof EntityAvatar){
+			if(attacker instanceof EntityClientGadget){
+				var monster = getEntityById(((EntityClientGadget) attacker).getOwnerEntityId());
+				if(monster instanceof EntityMonster){
+					((EntityAvatar) target).getPlayer().getTriggerManager().triggerEvent(Trigger.TRIGGER_KILLED_BY_CERTAIN_MONSTER, ((EntityMonster)monster).getMonsterData().getDescribeId());
+				}
+			}else if(attacker instanceof EntityMonster){
+				((EntityAvatar) target).getPlayer().getTriggerManager().triggerEvent(Trigger.TRIGGER_KILLED_BY_CERTAIN_MONSTER, ((EntityMonster)attacker).getMonsterData().getDescribeId());
+			}
 		}
 
 		// Packet

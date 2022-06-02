@@ -16,8 +16,8 @@ import emu.grasscutter.game.gacha.GachaRecord;
 import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.player.Player;
+import emu.grasscutter.game.player.PlayerAchievementInfo;
 import emu.grasscutter.game.quest.GameMainQuest;
-import emu.grasscutter.scripts.data.SuiteIndex;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -39,16 +39,8 @@ public final class DatabaseHelper {
 			if (reservedId == GameConstants.SERVER_CONSOLE_UID) {
 				return null;
 			}
-
-			// Make sure not other accounts has that id as its reservedPlayerId
 			exists = DatabaseHelper.getAccountByPlayerId(reservedId);
 			if (exists != null) {
-				return null;
-			}
-
-			// Make sure no existing player already has this id.
-			Player existsPlayer = DatabaseHelper.getPlayerByUid(reservedId);
-			if (existsPlayer != null) {
 				return null;
 			}
 		}
@@ -106,7 +98,7 @@ public final class DatabaseHelper {
 	}
 
 	public static Account getAccountByPlayerId(int playerId) {
-		return DatabaseManager.getGameDatastore().find(Account.class).filter(Filters.eq("reservedPlayerId", playerId)).first();
+		return DatabaseManager.getGameDatastore().find(Account.class).filter(Filters.eq("playerId", playerId)).first();
 	}
 
 	public static void deleteAccount(Account target) {
@@ -293,14 +285,15 @@ public final class DatabaseHelper {
 		return DatabaseManager.getGameDatastore().delete(quest).wasAcknowledged();
 	}
 
-	public static void saveSuiteIndex(SuiteIndex suiteIndex){
-		DatabaseManager.getGameDatastore().save(suiteIndex);
+	public static List<PlayerAchievementInfo> getAllAchievements(Player player) {
+		return DatabaseManager.getGameDatastore().find(PlayerAchievementInfo.class).filter(Filters.eq("ownerUid", player.getUid())).stream().toList();
 	}
 
-	public static SuiteIndex getSuiteIndex(SuiteIndex suiteIndex){
-		return DatabaseManager.getGameDatastore().find(SuiteIndex.class).
-				filter(Filters.eq("ownerUid", suiteIndex.getOwnerUid())).
-				filter(Filters.eq("groupId", suiteIndex.getGroupId())).
-				filter(Filters.eq("sceneId", suiteIndex.getSceneId())).first();
+	public static void saveAchievement(PlayerAchievementInfo playerAchievementInfo){
+		DatabaseManager.getGameDatastore().save(playerAchievementInfo);
+	}
+
+	public static void deleteAchievement(PlayerAchievementInfo playerAchievementInfo) {
+		DatabaseManager.getGameDatastore().delete(playerAchievementInfo);
 	}
 }
