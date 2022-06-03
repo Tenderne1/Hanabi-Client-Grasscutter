@@ -86,6 +86,7 @@ public class Player {
 	private Set<Integer> nameCardList;
 	private Set<Integer> flyCloakList;
 	private Set<Integer> costumeList;
+	private Set<Integer> unlockedForgingBlueprints;
 
 	private Integer widgetId;
 
@@ -181,6 +182,7 @@ public class Player {
 		this.nameCardList = new HashSet<>();
 		this.flyCloakList = new HashSet<>();
 		this.costumeList = new HashSet<>();
+		this.unlockedForgingBlueprints = new HashSet<>();
 
 		this.setSceneId(3);
 		this.setRegionId(1);
@@ -521,6 +523,10 @@ public class Player {
 
 	public Set<Integer> getNameCardList() {
 		return this.nameCardList;
+	}
+
+	public Set<Integer> getUnlockedForgingBlueprints() {
+		return unlockedForgingBlueprints;
 	}
 
 	public MpSettingType getMpSetting() {
@@ -1276,6 +1282,7 @@ public class Player {
 		session.send(new PacketWidgetGadgetAllDataNotify());
 		session.send(new PacketPlayerHomeCompInfoNotify(this));
 		session.send(new PacketHomeComfortInfoNotify(this));
+		session.send(new PacketForgeDataNotify(this));
 
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
