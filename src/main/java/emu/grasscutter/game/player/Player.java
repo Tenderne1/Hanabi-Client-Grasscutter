@@ -956,14 +956,11 @@ public class Player {
 					this.getScene().broadcastPacket(new PacketGadgetInteractRsp(drop, InteractType.INTERACT_TYPE_PICK_ITEM));
 			}
 		} else if (entity instanceof EntityGadget gadget) {
-			if (gadget.getContent() == null) {
-				return;
-			}
-
-			boolean shouldDelete = gadget.getContent().onInteract(this, opType);
-
-			if (shouldDelete) {
-				entity.getScene().removeEntity(entity);
+			if (gadget.getGadgetData().getType() == EntityType.RewardStatue) {
+				if (scene.getChallenge() != null) {
+					scene.getChallenge().getStatueDrops(this);
+				}
+				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
 			}
 		} else if (entity instanceof EntityMonster monster) {
 			insectCaptureManager.arrestSmallCreature(monster);
