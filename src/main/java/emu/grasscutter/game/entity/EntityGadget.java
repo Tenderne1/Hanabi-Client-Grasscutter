@@ -1,8 +1,5 @@
 package emu.grasscutter.game.entity;
 
-import java.util.Arrays;
-import java.util.List;
-
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.excels.GadgetData;
 import emu.grasscutter.game.entity.gadget.*;
@@ -11,8 +8,6 @@ import emu.grasscutter.game.props.EntityType;
 import emu.grasscutter.game.props.LifeState;
 import emu.grasscutter.game.props.PlayerProperty;
 import emu.grasscutter.game.world.Scene;
-import emu.grasscutter.game.world.World;
-import emu.grasscutter.net.proto.ClientGadgetInfoOuterClass;
 import emu.grasscutter.net.proto.AbilitySyncStateInfoOuterClass.AbilitySyncStateInfo;
 import emu.grasscutter.net.proto.AnimatorParameterValueInfoPairOuterClass.AnimatorParameterValueInfoPair;
 import emu.grasscutter.net.proto.EntityAuthorityInfoOuterClass.EntityAuthorityInfo;
@@ -25,7 +20,6 @@ import emu.grasscutter.net.proto.SceneEntityAiInfoOuterClass.SceneEntityAiInfo;
 import emu.grasscutter.net.proto.SceneEntityInfoOuterClass.SceneEntityInfo;
 import emu.grasscutter.net.proto.SceneGadgetInfoOuterClass.SceneGadgetInfo;
 import emu.grasscutter.net.proto.VectorOuterClass.Vector;
-import emu.grasscutter.net.proto.WorktopInfoOuterClass.WorktopInfo;
 import emu.grasscutter.scripts.constants.EventType;
 import emu.grasscutter.scripts.data.SceneGadget;
 import emu.grasscutter.scripts.data.ScriptArgs;
@@ -34,11 +28,9 @@ import emu.grasscutter.server.packet.send.PacketLifeStateChangeNotify;
 import emu.grasscutter.utils.Position;
 import emu.grasscutter.utils.ProtoHelper;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import lombok.ToString;
 
+@ToString(callSuper = true)
 public class EntityGadget extends EntityBaseGadget {
     private final GadgetData data;
     private final Position pos;
@@ -49,9 +41,6 @@ public class EntityGadget extends EntityBaseGadget {
     private int pointType;
     private GadgetContent content;
     private SceneGadget metaGadget;
-
-    private IntSet worktopOptions;
-
 
     public EntityGadget(Scene scene, int gadgetId, Position pos) {
         super(scene);
@@ -73,13 +62,11 @@ public class EntityGadget extends EntityBaseGadget {
 
     @Override
     public Position getPosition() {
-        // TODO Auto-generated method stub
         return this.pos;
     }
 
     @Override
     public Position getRotation() {
-        // TODO Auto-generated method stub
         return this.rot;
     }
 
@@ -99,21 +86,10 @@ public class EntityGadget extends EntityBaseGadget {
         this.state = state;
     }
 
-    public void updateState(int state) {
+    public void updateState(int state){
         this.setState(state);
         this.getScene().broadcastPacket(new PacketGadgetStateNotify(this, state));
         getScene().getScriptManager().callEvent(EventType.EVENT_GADGET_STATE_CHANGE, new ScriptArgs(state, this.getConfigId()));
-    }
-
-    public IntSet getWorktopOptions() {
-        return worktopOptions;
-    }
-
-    public void addWorktopOptions(int[] options) {
-        if (this.worktopOptions == null) {
-            this.worktopOptions = new IntOpenHashSet();
-        }
-        Arrays.stream(options).forEach(this.worktopOptions::add);
     }
 
     public int getPointType() {
@@ -128,6 +104,11 @@ public class EntityGadget extends EntityBaseGadget {
         return content;
     }
 
+    @Deprecated // Dont use!
+    public void setContent(GadgetContent content) {
+        this.content = this.content == null ? content : this.content;
+    }
+
     public SceneGadget getMetaGadget() {
         return metaGadget;
     }
@@ -136,6 +117,7 @@ public class EntityGadget extends EntityBaseGadget {
         this.metaGadget = metaGadget;
     }
 
+    // TODO refactor
     public void buildContent() {
         if (getContent() != null || getGadgetData() == null || getGadgetData().getType() == null) {
             return;
@@ -153,19 +135,10 @@ public class EntityGadget extends EntityBaseGadget {
         this.content = content;
     }
 
-    public void removeWorktopOption(int option) {
-        if (this.worktopOptions == null) {
-            return;
-        }
-        this.worktopOptions.remove(option);
-    }
-
     @Override
     public Int2FloatOpenHashMap getFightProperties() {
-        // TODO Auto-generated method stub
         return null;
     }
-
 
     @Override
     public void onCreate() {
@@ -213,18 +186,14 @@ public class EntityGadget extends EntityBaseGadget {
                 .setIsEnableInteract(true)
                 .setAuthorityPeerId(this.getScene().getWorld().getHostPeerId());
 
-        if (this.getGadgetData().getType() == EntityType.Worktop && this.getWorktopOptions() != null) {
-            WorktopInfo worktop = WorktopInfo.newBuilder()
-                    .addAllOptionList(this.getWorktopOptions())
-                    .build();
-            gadgetInfo.setWorktop(worktop);
+        if (this.getContent() != null) {
+            this.getContent().onBuildProto(gadgetInfo);
         }
 
         entityInfo.setGadget(gadgetInfo);
 
         return entityInfo.build();
     }
-
     public void die() {
         getScene().broadcastPacket(new PacketLifeStateChangeNotify(this, LifeState.LIFE_DEAD));
         this.onDeath(0);

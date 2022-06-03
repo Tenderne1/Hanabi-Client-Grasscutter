@@ -963,16 +963,6 @@ public class Player {
 						dungeonChallenge.getStatueDrops(this);
 				}
 				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
-			} else {
-				if (gadget.getContent() == null) {
-					return;
-				}
-
-				boolean shouldDelete = gadget.getContent().onInteract(this, opType);
-
-				if (shouldDelete) {
-					entity.getScene().removeEntity(entity);
-				}
 			}
 		} else if (entity instanceof EntityMonster monster) {
 			insectCaptureManager.arrestSmallCreature(monster);
@@ -1205,8 +1195,6 @@ public class Player {
 			this.sendPacket(new PacketAvatarExpeditionDataNotify(this));
 		}
 	}
-
-
 
 
 	public void resetSendPlayerLocTime() {
