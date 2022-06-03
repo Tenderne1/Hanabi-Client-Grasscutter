@@ -58,7 +58,7 @@ public class EntityGadget extends EntityBaseGadget {
         this.data = GameData.getGadgetDataMap().get(gadgetId);
         this.id = getScene().getWorld().getNextEntityId(EntityIdType.GADGET);
         this.gadgetId = gadgetId;
-        this.pos = pos == null ? new Position(0, 0, 0) : pos.clone();
+        this.pos = pos.clone();
         this.rot = new Position();
     }
 
@@ -166,9 +166,19 @@ public class EntityGadget extends EntityBaseGadget {
         return null;
     }
 
+
+    @Override
+    public void onCreate() {
+        // Lua event
+        getScene().getScriptManager().callEvent(EventType.EVENT_GADGET_CREATE, new ScriptArgs(this.getConfigId()));
+    }
+
     @Override
     public void onDeath(int killerId) {
-
+        if(getScene().getChallenge() != null){
+            getScene().getChallenge().onGadgetDeath(this);
+        }
+        getScene().getScriptManager().callEvent(EventType.EVENT_ANY_GADGET_DIE, new ScriptArgs(this.getConfigId()));
     }
 
     @Override

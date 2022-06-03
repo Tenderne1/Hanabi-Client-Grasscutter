@@ -12,6 +12,7 @@ import emu.grasscutter.game.ability.AbilityManager;
 import emu.grasscutter.game.avatar.Avatar;
 import emu.grasscutter.game.avatar.AvatarProfileData;
 import emu.grasscutter.game.avatar.AvatarStorage;
+import emu.grasscutter.game.dungeons.challenge.DungeonChallenge;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.managers.DeforestationManager.DeforestationManager;
 import emu.grasscutter.game.expedition.ExpeditionInfo;
@@ -958,9 +959,20 @@ public class Player {
 		} else if (entity instanceof EntityGadget gadget) {
 			if (gadget.getGadgetData().getType() == EntityType.RewardStatue) {
 				if (scene.getChallenge() != null) {
-					scene.getChallenge().getStatueDrops(this);
+					if (scene.getChallenge() instanceof DungeonChallenge dungeonChallenge)
+						dungeonChallenge.getStatueDrops(this);
 				}
 				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
+			} else {
+				if (gadget.getContent() == null) {
+					return;
+				}
+
+				boolean shouldDelete = gadget.getContent().onInteract(this, opType);
+
+				if (shouldDelete) {
+					entity.getScene().removeEntity(entity);
+				}
 			}
 		} else if (entity instanceof EntityMonster monster) {
 			insectCaptureManager.arrestSmallCreature(monster);

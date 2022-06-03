@@ -9,6 +9,7 @@ import emu.grasscutter.game.dungeons.DungeonSettleListener;
 import emu.grasscutter.game.dungeons.challenge.DungeonChallenge;
 import emu.grasscutter.game.dungeons.challenge.WorldChallenge;
 import emu.grasscutter.game.entity.*;
+import emu.grasscutter.game.entity.gadget.GadgetGatherPoint;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.player.TeamInfo;
 import emu.grasscutter.game.props.ClimateType;
@@ -52,7 +53,7 @@ public class Scene {
 	private int weather;
 	
 	private SceneScriptManager scriptManager;
-	private DungeonChallenge challenge;
+	private WorldChallenge challenge;
 	private List<DungeonSettleListener> dungeonSettleListeners;
 	private DungeonData dungeonData;
 	private int prevScene; // Id of the previous scene
@@ -201,11 +202,11 @@ public class Scene {
 		this.dungeonData = dungeonData;
 	}
 
-	public DungeonChallenge getChallenge() {
+	public WorldChallenge getChallenge() {
 		return challenge;
 	}
 
-	public void setChallenge(DungeonChallenge challenge) {
+	public void setChallenge(WorldChallenge challenge) {
 		this.challenge = challenge;
 	}
 

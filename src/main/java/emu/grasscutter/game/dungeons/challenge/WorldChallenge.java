@@ -47,9 +47,11 @@ public class WorldChallenge {
         this.goal = goal;
         this.score = new AtomicInteger(0);
     }
+
     public boolean inProgress(){
         return this.progress;
     }
+
     public void onCheckTimeOut(){
         if(!inProgress()){
             return;
@@ -59,6 +61,7 @@ public class WorldChallenge {
         }
         challengeTriggers.forEach(t -> t.onCheckTimeout(this));
     }
+
     public void start(){
         if(inProgress()){
             Grasscutter.getLogger().info("Could not start a in progress challenge.");
@@ -101,6 +104,7 @@ public class WorldChallenge {
     public int increaseScore(){
         return score.incrementAndGet();
     }
+
     public void onMonsterDeath(EntityMonster monster){
         if(!inProgress()){
             return;
@@ -110,6 +114,7 @@ public class WorldChallenge {
         }
         this.challengeTriggers.forEach(t -> t.onMonsterDeath(this, monster));
     }
+
     public void onGadgetDeath(EntityGadget gadget){
         if(!inProgress()){
             return;
@@ -129,4 +134,6 @@ public class WorldChallenge {
         }
         this.challengeTriggers.forEach(t -> t.onGadgetDamage(this, gadget));
     }
+
+
 }

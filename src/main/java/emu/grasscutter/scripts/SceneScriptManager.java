@@ -152,6 +152,7 @@ public class SceneScriptManager {
 			}
 			return group;
 		}
+
 		return null;
 	}
 
@@ -187,22 +188,27 @@ public class SceneScriptManager {
 			group.regions.forEach(this::registerRegion);
 		}
 	}
-	
+
 	public void checkRegions() {
 		if (this.regions.size() == 0) {
 			return;
 		}
-		
+
 		for (SceneRegion region : this.regions.values()) {
+			getScene().getPlayers().forEach(player -> {
+				if (region.contains(player.getPos())) {
+					callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.config_id, 0).setSourceEntityId(region.config_id));
+				}
+			});
 			getScene().getEntities().values()
-				.stream()
-				.filter(e -> e.getEntityType() <= 2 && region.contains(e.getPosition()))
-				.forEach(region::addEntity);
+					.stream()
+					.filter(e -> e.getEntityType() <= 2 && region.contains(e.getPosition()))
+					.forEach(region::addEntity);
 
 			if (region.hasNewEntities()) {
 				// This is not how it works, source_eid should be region entity id, but we dont have an entity for regions yet
-				callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.config_id).setSourceEntityId(region.config_id));
-				
+				callEvent(EventType.EVENT_ENTER_REGION, new ScriptArgs(region.config_id, 0).setSourceEntityId(region.config_id));
+
 				region.resetNewEntities();
 			}
 		}
@@ -225,10 +231,10 @@ public class SceneScriptManager {
 	public void spawnGadgetsInGroup(SceneGroup group) {
 		spawnGadgetsInGroup(group, null);
 	}
-	
+
 	public void spawnGadgetsInGroup(SceneGroup group, SceneSuite suite) {
 		var gadgets = group.gadgets.values();
-		
+
 		if (suite != null) {
 			gadgets = suite.sceneGadgets;
 		}
@@ -368,6 +374,7 @@ public class SceneScriptManager {
 
 		return entity;
 	}
+
 	public EntityNPC createNPC(SceneNPC npc, int blockId, int suiteId) {
 		return new EntityNPC(getScene(), npc, blockId, suiteId);
 	}

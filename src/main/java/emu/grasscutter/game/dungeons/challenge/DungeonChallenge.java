@@ -60,10 +60,10 @@ public class DungeonChallenge extends WorldChallenge {
 	}
 	
 	private void settle() {
+		getScene().getDungeonSettleObservers().forEach(o -> o.onDungeonSettle(getScene()));
+
 		if(!stage){
-			getScene().getDungeonSettleObservers().forEach(o -> o.onDungeonSettle(getScene()));
-			getScene().getScriptManager().callEvent(EventType.EVENT_DUNGEON_SETTLE,
-					new ScriptArgs(this.isSuccess() ? 1 : 0));
+			getScene().getScriptManager().callEvent(EventType.EVENT_DUNGEON_SETTLE, new ScriptArgs(this.isSuccess() ? 1 : 0));
 		}
 	}
 	
@@ -72,20 +72,20 @@ public class DungeonChallenge extends WorldChallenge {
 		if (!isSuccess() || dungeonData == null || dungeonData.getRewardPreview() == null || dungeonData.getRewardPreview().getPreviewItems().length == 0) {
 			return;
 		}
-		
+
 		// Already rewarded
 		if (getRewardedPlayers().contains(player.getUid())) {
 			return;
 		}
-		
+
 		List<GameItem> rewards = new ArrayList<>();
 		for (ItemParamData param : getScene().getDungeonData().getRewardPreview().getPreviewItems()) {
 			rewards.add(new GameItem(param.getId(), Math.max(param.getCount(), 1)));
 		}
-		
+
 		player.getInventory().addItems(rewards, ActionReason.DungeonStatueDrop);
 		player.sendPacket(new PacketGadgetAutoPickDropInfoNotify(rewards));
-		
+
 		getRewardedPlayers().add(player.getUid());
 	}
 }

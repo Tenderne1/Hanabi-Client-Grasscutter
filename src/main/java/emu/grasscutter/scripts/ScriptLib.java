@@ -1,11 +1,13 @@
 package emu.grasscutter.scripts;
 
 import emu.grasscutter.game.dungeons.challenge.DungeonChallenge;
+import emu.grasscutter.game.dungeons.challenge.WorldChallenge;
 import emu.grasscutter.game.entity.EntityGadget;
 import emu.grasscutter.game.entity.EntityMonster;
 import emu.grasscutter.game.entity.GameEntity;
 import emu.grasscutter.game.entity.gadget.GadgetWorktop;
 import emu.grasscutter.game.dungeons.challenge.factory.ChallengeFactory;
+import emu.grasscutter.game.world.World;
 import emu.grasscutter.scripts.data.SceneGroup;
 import emu.grasscutter.scripts.data.SceneRegion;
 import emu.grasscutter.server.packet.send.PacketCanUseSkillNotify;
@@ -230,33 +232,46 @@ public class ScriptLib {
 
 		return 0;
 	}
+
 	// param3 (probably time limit for timed dungeons)
 	public int ActiveChallenge(int challengeId, int challengeIndex, int timeLimitOrGroupId, int groupId, int objectiveKills, int param5) {
 		logger.debug("[LUA] Call ActiveChallenge with {},{},{},{},{},{}",
 				challengeId,challengeIndex,timeLimitOrGroupId,groupId,objectiveKills,param5);
+
+		SceneGroup group = getSceneScriptManager().getGroupById(groupId);
+		var objective = objectiveKills;
+
+		if(group == null){
+			group = getSceneScriptManager().getGroupById(timeLimitOrGroupId);
+			objective = groupId;
+		}
 
 		var challenge = ChallengeFactory.getChallenge(
 				challengeId,
 				challengeIndex,
 				timeLimitOrGroupId,
 				groupId,
-				objectiveKills,
+				objective,
 				param5,
 				getSceneScriptManager().getScene(),
-				getCurrentGroup().get()
-				);
+				group
+		);
 
-		if(challenge == null){
+		if (group == null || group.monsters == null || challenge == null)
 			return 1;
-		}
 
+		if(getSceneScriptManager().getScene().getChallenge() != null &&
+				getSceneScriptManager().getScene().getChallenge().inProgress())
+			return 0;
+
+		// set if tower first stage (6-1)
 		if(challenge instanceof DungeonChallenge dungeonChallenge){
 			// set if tower first stage (6-1)
 			dungeonChallenge.setStage(getSceneScriptManager().getVariables().getOrDefault("stage", -1) == 0);
 		}
 
-		assert challenge instanceof DungeonChallenge;
-		getSceneScriptManager().getScene().setChallenge((DungeonChallenge) challenge);
+		getSceneScriptManager().getScene().setChallenge(challenge);
+
 		challenge.start();
 		return 0;
 	}
@@ -299,18 +314,18 @@ public class ScriptLib {
 		// Kill and Respawn?
 		int groupId = table.get("group_id").toint();
 		int suite = table.get("suite").toint();
-		
+
 		SceneGroup group = getSceneScriptManager().getGroupById(groupId);
-		
+
 		if (group == null || group.monsters == null) {
 			return 1;
 		}
-		
+
 		getSceneScriptManager().refreshGroup(group, suite);
-		
+
 		return 0;
 	}
-	
+
 	public int GetRegionEntityCount(LuaTable table) {
 		logger.debug("[LUA] Call GetRegionEntityCount with {}",
 				printTable(table));
@@ -325,7 +340,7 @@ public class ScriptLib {
 
 		return (int) region.getEntities().intStream().filter(e -> e >> 24 == entityType).count();
 	}
-	
+
 	public void PrintContextLog(String msg) {
 		logger.info("[LUA] " + msg);
 	}
@@ -427,14 +442,14 @@ public class ScriptLib {
 		var configId = table.get("config_id").toint();
 
 		var group = getCurrentGroup();
-		
+
 		if (group.isEmpty()) {
 			return 1;
 		}
-		
+
 		var gadget = group.get().gadgets.get(configId);
 		var entity = getSceneScriptManager().createGadget(group.get().id, group.get().block_id, gadget);
-		
+
 		getSceneScriptManager().addEntity(entity);
 
 		return 0;

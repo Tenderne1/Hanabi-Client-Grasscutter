@@ -137,6 +137,7 @@ public class EntityMonster extends GameEntity {
 		if (getScene().getChallenge() != null && getScene().getChallenge().getGroup().id == this.getGroupId()) {
 			getScene().getChallenge().onMonsterDeath(this);
 		}
+
 		if (getScene().getScriptManager().isInit() && this.getGroupId() > 0) {
 			if(getScene().getScriptManager().getScriptMonsterSpawnService() != null){
 				getScene().getScriptManager().getScriptMonsterSpawnService().onMonsterDead(this);
