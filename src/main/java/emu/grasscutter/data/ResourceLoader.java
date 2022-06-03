@@ -99,6 +99,7 @@ public class ResourceLoader {
 		}
 	}
 
+
 	public static void loadResources() {
 		loadResources(false);
 	}

@@ -18,7 +18,7 @@ public class PacketAchievementUpdateNotify extends BasePacket {
 
         List<Achievement> a_list = new ArrayList<>();
 
-        var achievementExcelInfo = GameData.getAchievementDataIdMap().get(achievementInfo.getAchievementId());
+        var achievementExcelInfo = GameData.getAchievementDataMap().get(achievementInfo.getAchievementId());
         var achievementToAdd = Achievement.newBuilder()
                 .setId(achievementInfo.getAchievementId())
                 .setStatusValue(achievementInfo.getStatusValue())

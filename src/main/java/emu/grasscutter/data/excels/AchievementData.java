@@ -13,7 +13,6 @@ public class AchievementData extends GameResource {
     private AchievementTriggerConfig triggerConfig;
     private boolean isDeleteWatcherAfterFinish;
     private int progress;
-    private boolean isDisuse;
 
     public int getId() {
         return id;
@@ -31,9 +30,6 @@ public class AchievementData extends GameResource {
         return progress;
     }
 
-    public boolean getIsDisuse() {
-        return isDisuse;
-    }
 
     public AchievementTriggerConfig getTriggerConfig() {
         return triggerConfig;
@@ -45,21 +41,19 @@ public class AchievementData extends GameResource {
 
     @Override
     public void onLoad() {
-        if(!this.getIsDisuse()) {
-            GameData.getAchievementDataIdMap().put(this.getId(), this);
-        }
+
     }
 
-    public class AchievementTriggerConfig {
-        Trigger TriggerType;
-        String[] ParamList;
+    public static class AchievementTriggerConfig {
+        Trigger triggerType;
+        String[] paramList;
 
         public Trigger getTriggerType() {
-            return TriggerType;
+            return triggerType;
         }
 
         public String[] getParamList() {
-            return ParamList;
+            return paramList;
         }
     }
 

@@ -63,7 +63,6 @@ public class GameData {
 	private static final Int2ObjectMap<SceneData> sceneDataMap = new Int2ObjectLinkedOpenHashMap<>();
 	private static final Int2ObjectMap<FetterData> fetterDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<AchievementData> achievementDataMap = new Int2ObjectOpenHashMap<>();
-	private static final Int2ObjectMap<AchievementData> achievementDataIdMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexQuestData> codexQuestDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexQuestData> codexQuestDataIdMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexAnimalData> codexAnimalDataMap = new Int2ObjectOpenHashMap<>();
@@ -312,7 +311,7 @@ public class GameData {
 		return fetters;
 	}
 
-	public static Int2ObjectMap<AchievementData> getAchievementDataIdMap(){return achievementDataIdMap;}
+	public static Int2ObjectMap<AchievementData> getAchievementDataMap(){return achievementDataMap;}
 
 	public static Int2ObjectMap<CodexQuestData> getCodexQuestDataIdMap(){return codexQuestDataIdMap;}
 

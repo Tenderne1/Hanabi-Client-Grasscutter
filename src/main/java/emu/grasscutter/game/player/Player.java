@@ -2,6 +2,7 @@ package emu.grasscutter.game.player;
 
 import dev.morphia.annotations.*;
 import emu.grasscutter.GameConstants;
+import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.excels.PlayerLevelData;
 import emu.grasscutter.database.DatabaseHelper;
@@ -11,10 +12,8 @@ import emu.grasscutter.game.ability.AbilityManager;
 import emu.grasscutter.game.avatar.Avatar;
 import emu.grasscutter.game.avatar.AvatarProfileData;
 import emu.grasscutter.game.avatar.AvatarStorage;
+import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.managers.DeforestationManager.DeforestationManager;
-import emu.grasscutter.game.entity.EntityGadget;
-import emu.grasscutter.game.entity.EntityItem;
-import emu.grasscutter.game.entity.GameEntity;
 import emu.grasscutter.game.expedition.ExpeditionInfo;
 import emu.grasscutter.game.friends.FriendsList;
 import emu.grasscutter.game.friends.PlayerProfile;
@@ -23,6 +22,7 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.inventory.Inventory;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.mail.MailHandler;
+import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.game.managers.SotSManager;
 import emu.grasscutter.game.managers.EnergyManager.EnergyManager;
@@ -151,6 +151,7 @@ public class Player {
 	@Transient private StaminaManager staminaManager;
 	@Transient private EnergyManager energyManager;
 	@Transient private DeforestationManager deforestationManager;
+	@Transient private InsectCaptureManager insectCaptureManager;
 
 	private long springLastUsed;
 	private HashMap<String, MapMark> mapMarks;
@@ -165,6 +166,7 @@ public class Player {
 		this.towerManager = new TowerManager(this);
 		this.abilityManager = new AbilityManager(this);
 		this.deforestationManager = new DeforestationManager(this);
+		this.insectCaptureManager = new InsectCaptureManager(this);
 
 		this.setQuestManager(new QuestManager(this));
 		this.setTriggerManager(new TriggerManager(this));
@@ -963,11 +965,16 @@ public class Player {
 			if (shouldDelete) {
 				entity.getScene().removeEntity(entity);
 			}
+		} else if (entity instanceof EntityMonster monster) {
+			insectCaptureManager.arrestSmallCreature(monster);
+		} else if (entity instanceof EntityVehicle vehicle) {// try to arrest it, example: glowworm
+			insectCaptureManager.arrestSmallCreature(vehicle);
 		} else {
 			// Delete directly
 			entity.getScene().removeEntity(entity);
 		}
 	}
+
 
 	public void onPause() {
 		getStaminaManager().stopSustainedStaminaHandler();

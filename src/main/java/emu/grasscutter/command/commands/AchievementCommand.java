@@ -6,8 +6,6 @@ import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.excels.AchievementData;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.player.PlayerAchievementInfo;
-import emu.grasscutter.game.quest.GameQuest;
-import emu.grasscutter.net.proto.AchievementOuterClass;
 
 import java.util.List;
 
@@ -32,7 +30,7 @@ public final class AchievementCommand implements CommandHandler {
 
         switch (cmd) {
             case "finish" -> {
-                AchievementData achievementExcelInfo = GameData.getAchievementDataIdMap().get(achievementId);
+                AchievementData achievementExcelInfo = GameData.getAchievementDataMap().get(achievementId);
                 PlayerAchievementInfo achievementInfo = targetPlayer.getAchievementManager().getAchievementInfoProperties().get(achievementId);
 
                 if (achievementExcelInfo == null) {

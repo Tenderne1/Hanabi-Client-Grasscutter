@@ -1,11 +1,8 @@
 package emu.grasscutter.game.player;
 
 import dev.morphia.annotations.Transient;
-import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.excels.AchievementData;
 import emu.grasscutter.database.DatabaseHelper;
-import emu.grasscutter.game.trigger.enums.Trigger;
 import emu.grasscutter.game.trigger.events.AchievementTriggerEvent;
 import emu.grasscutter.server.packet.send.PacketAchievementUpdateNotify;
 
@@ -55,7 +52,7 @@ public class PlayerAchievement {
     }
 
     public void checkAndSetAllAchievements(){
-        GameData.getAchievementDataIdMap().forEach((achievementId, achievement) -> {
+        GameData.getAchievementDataMap().forEach((achievementId, achievement) -> {
             if(!getAchievementInfoProperties().containsKey(achievementId)){
                 var playerAchievementInfoToAdd = new PlayerAchievementInfo(achievementId);
                 playerAchievementInfoToAdd.setOwnerUid(getPlayer().getUid());
@@ -72,7 +69,7 @@ public class PlayerAchievement {
 
     public void checkAchievement(int achievementId, boolean needSave, int progressAddition){
         var playerAchievementInfo = getAchievementInfoProperties().get(achievementId);
-        var playerAchievementExcelInfo = GameData.getAchievementDataIdMap().get(achievementId);
+        var playerAchievementExcelInfo = GameData.getAchievementDataMap().get(achievementId);
         if(!playerAchievementInfo.getFinished()) {
             playerAchievementInfo.setCurrentProgress(playerAchievementInfo.getCurrentProgress() + progressAddition);
             if (playerAchievementInfo.getCurrentProgress() >= playerAchievementExcelInfo.getProgress()) {

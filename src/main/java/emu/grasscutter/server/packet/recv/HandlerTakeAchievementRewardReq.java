@@ -24,7 +24,7 @@ public class HandlerTakeAchievementRewardReq extends PacketHandler {
         List<ItemParam> items = new ArrayList<>();
         req.getIdListList().forEach(achievementId -> {
             var achievementInfo = session.getPlayer().getAchievementManager().getAchievementInfoProperties().get(achievementId);
-            var achievementExcelInfo = GameData.getAchievementDataIdMap().get(achievementId);
+            var achievementExcelInfo = GameData.getAchievementDataMap().get(achievementId);
             if(achievementInfo != null){
                 achievementInfo.setViewed(true);
                 achievementInfo.save();

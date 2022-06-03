@@ -27,7 +27,7 @@ public class AchievementTriggerEvent implements ITriggerListener {
     public boolean triggerEvent(TriggerEvent event) {
         if(event.getTriggerType() == triggerType){
             var achievementInfo = player.getAchievementManager().getAchievementInfoProperties().get(achievementId);
-            var achievementExcel = GameData.getAchievementDataIdMap().get(achievementId);
+            var achievementExcel = GameData.getAchievementDataMap().get(achievementId);
             var paramList = achievementExcel.getTriggerConfig().getParamList();
             Grasscutter.getLogger().debug("Achievement trigger: " + triggerType + " _ " + achievementId);
             switch (triggerType){

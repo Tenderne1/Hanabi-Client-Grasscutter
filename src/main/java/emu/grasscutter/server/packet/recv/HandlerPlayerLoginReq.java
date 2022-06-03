@@ -51,7 +51,10 @@ public class HandlerPlayerLoginReq extends PacketHandler {
 
 		// Final packet to tell client logging in is done
 		session.send(new PacketPlayerLoginRsp(session));
+
+		Grasscutter.getLogger().info("Debug Achievement System for : " + session.getAccount().getUsername());
 		session.send(new PacketAchievementAllDataNotify(session));
+
 	}
 
 }
