@@ -6,6 +6,7 @@ import java.util.Calendar;
 import emu.grasscutter.auth.AuthenticationSystem;
 import emu.grasscutter.auth.DefaultAuthentication;
 import emu.grasscutter.command.CommandMap;
+import emu.grasscutter.game.managers.EnergyManager.EnergyManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.plugin.PluginManager;
 import emu.grasscutter.plugin.api.ServerHook;
@@ -101,11 +102,14 @@ public final class Grasscutter {
 	
 		// Initialize server.
 		Grasscutter.getLogger().info(translate("messages.status.starting"));
+		Grasscutter.getLogger().info(translate("messages.status.game_version", GameConstants.VERSION));
+		Grasscutter.getLogger().info(translate("messages.status.version", BuildConfig.VERSION, BuildConfig.GIT_HASH));
 	
 		// Load all resources.
 		Grasscutter.updateDayOfWeek();
 		ResourceLoader.loadAll();
 		ScriptLoader.init();
+		EnergyManager.initialize();
 	
 		// Initialize database.
 		DatabaseManager.initialize();
