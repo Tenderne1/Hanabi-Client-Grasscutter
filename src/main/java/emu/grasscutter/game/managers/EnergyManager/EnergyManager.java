@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.Map.entry;
 
 import com.google.gson.reflect.TypeToken;
@@ -327,6 +329,10 @@ public class EnergyManager {
      Energy logic related to using skills.
      **********/
     private void handleBurstCast(Avatar avatar, int skillId) {
+        if (avatar.getSkillDepot() != null && skillId == avatar.getSkillDepot().getEnergySkill()) {
+            player.setPlayerElementBurstInvincibleEndTime(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - player.getSession().getLag() + TimeUnit.MILLISECONDS.toMillis(2000));
+        }
+
         // Don't do anything if energy usage is disabled.
         if (!GAME_OPTIONS.energyUsage || !this.energyUsage) {
             return;

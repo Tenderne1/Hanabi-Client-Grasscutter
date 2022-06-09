@@ -146,6 +146,7 @@ public class Player {
 	@Transient private SceneLoadState sceneState;
 	@Transient private boolean hasSentAvatarDataNotify;
 	@Transient private long nextSendPlayerLocTime = 0;
+	@Transient private long playerElementBurstInvincibleEndTime = 0;
 
 	@Transient private final Int2ObjectMap<CoopRequest> coopRequests;
 	@Transient private final Queue<AttackResult> attackResults;
@@ -1346,6 +1347,14 @@ public class Player {
 		//Note: DON'T DELETE BY UID,BECAUSE THERE ARE MULTIPLE SAME UID PLAYERS WHEN DUPLICATED LOGIN!
 		//so I decide to delete by object rather than uid
 		getServer().getPlayers().values().removeIf(player1 -> player1 == this);
+	}
+
+	public long getPlayerElementBurstInvincibleEndTime() {
+		return playerElementBurstInvincibleEndTime;
+	}
+
+	public void setPlayerElementBurstInvincibleEndTime(long playerElementBurstInvincibleEndTime) {
+		this.playerElementBurstInvincibleEndTime = playerElementBurstInvincibleEndTime;
 	}
 
 	public enum SceneLoadState {

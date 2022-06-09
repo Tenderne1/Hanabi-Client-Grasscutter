@@ -1,6 +1,7 @@
 package emu.grasscutter.server.game;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -19,11 +20,12 @@ import emu.grasscutter.server.event.game.SendPacketEvent;
 import emu.grasscutter.utils.Crypto;
 import emu.grasscutter.utils.FileUtils;
 import emu.grasscutter.utils.Utils;
-import io.jpower.kcp.netty.UkcpChannel;
+import io.jpower.kcp.netty.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import org.reflections8.ReflectionUtils;
 
 import static emu.grasscutter.utils.Language.translate;
 import static emu.grasscutter.Configuration.*;
@@ -40,6 +42,9 @@ public class GameSession extends KcpChannel {
 	private int clientTime;
 	private long lastPingTime;
 	private int lastClientSeq = 10;
+
+	// nano time of lag
+	private int lag;
 
 	private final ChannelPipeline pipeline;
 	@Override
@@ -227,6 +232,7 @@ public class GameSession extends KcpChannel {
 	@Override
 	public void onMessage(ChannelHandlerContext ctx, ByteBuf data) {
 		// Decrypt and turn back into a packet
+		updateLag();
 		byte[] byteData = Utils.byteBufToArray(data);
 		Crypto.xor(byteData, useSecretKey() ? Crypto.ENCRYPT_KEY : Crypto.DISPATCH_KEY);
 		ByteBuf packet = Unpooled.wrappedBuffer(byteData);
@@ -283,7 +289,36 @@ public class GameSession extends KcpChannel {
 			packet.release();
 		}
 	}
-	
+
+	private void updateLag() {
+		final UkcpServerChildChannel channel = (UkcpServerChildChannel) super.getChannel();
+		final Set<Field> fields = ReflectionUtils.getFields(UkcpServerChildChannel.class, v -> "ukcp".equals(v.getName()));
+		if (!fields.isEmpty()) {
+			try {
+				Ukcp ukcp = (Ukcp) getFieldValue(channel, fields);
+				final Set<Field> fieldsOfUkcp = ReflectionUtils.getFields(Ukcp.class, v -> "kcp".equals(v.getName()));
+				if (!fieldsOfUkcp.isEmpty()) {
+					final Kcp kcp = (Kcp) getFieldValue(ukcp, fieldsOfUkcp);
+					final KcpMetric metric = kcp.getMetric();
+					final int srtt = metric.srtt();
+					this.lag = srtt / 2;
+				}
+			} catch (Exception e) {
+
+			}
+		}
+	}
+
+	private Object getFieldValue(Object ukcp, Set<Field> fieldsOfUkcp) throws IllegalAccessException {
+		final Field kcpField = fieldsOfUkcp.iterator().next();
+		kcpField.setAccessible(true);
+		return kcpField.get(ukcp);
+	}
+
+	public int getLag() {
+		return lag;
+	}
+
 	public enum SessionState {
 		INACTIVE,
 		WAITING_FOR_TOKEN,
