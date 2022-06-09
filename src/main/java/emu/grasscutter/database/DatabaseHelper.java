@@ -117,7 +117,7 @@ public final class DatabaseHelper {
 		// This should optimally be wrapped inside a transaction, to make sure an error thrown mid-way does not leave the
 		// database in an inconsistent state, but unfortunately Mongo only supports that when we have a replica set ...
 
-		Player player = Grasscutter.getGameServer().getPlayerByAccountId(target.getId());
+		Player player = Grasscutter.getGameServer().getPlayerByUid(target.getReservedPlayerUid());
 		
         if (player != null) {
         	// Close session first

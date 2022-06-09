@@ -4,7 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.DataLoader;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.RewardPreviewData;
+import emu.grasscutter.data.excels.RewardPreviewData;
 import emu.grasscutter.game.entity.gadget.chest.BossChestInteractHandler;
 import emu.grasscutter.game.entity.gadget.chest.ChestInteractHandler;
 import emu.grasscutter.game.entity.gadget.chest.NormalChestInteractHandler;
@@ -30,11 +30,11 @@ public class WorldDataManager {
         // set the special chest first
         chestInteractHandlerMap.put("SceneObj_Chest_Flora", new BossChestInteractHandler());
 
-    	try(InputStream is = DataLoader.load("ChestReward.json"); InputStreamReader isr = new InputStreamReader(is)) {
+        try(InputStream is = DataLoader.load("ChestReward.json"); InputStreamReader isr = new InputStreamReader(is)) {
             List<ChestReward> chestReward = Grasscutter.getGsonFactory().fromJson(
-            		isr,
+                    isr,
                     TypeToken.getParameterized(List.class, ChestReward.class).getType());
-            
+
             chestReward.forEach(reward ->
                     reward.getObjNames().forEach(
                             name -> chestInteractHandlerMap.putIfAbsent(name, new NormalChestInteractHandler(reward))));

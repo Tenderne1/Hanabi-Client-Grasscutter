@@ -24,7 +24,7 @@ import static emu.grasscutter.Configuration.SCRIPT;
 @Setter
 public class SceneGroup {
 	public transient int block_id; // Not an actual variable in the scripts but we will keep it here for reference
-	
+
 	public int id;
 	public int refresh_id;
 	public Position pos;
@@ -36,7 +36,7 @@ public class SceneGroup {
 	public List<SceneRegion> regions;
 	public List<SceneSuite> suites;
 	public List<SceneVar> variables;
-	
+
 	public SceneBusiness business;
 	public SceneGarbage garbages;
 	public SceneInitConfig init_config;
@@ -53,15 +53,15 @@ public class SceneGroup {
 	public boolean isLoaded() {
 		return loaded;
 	}
-	
+
 	public void setLoaded(boolean loaded) {
 		this.loaded = loaded;
 	}
-	
+
 	public int getBusinessType() {
 		return this.business == null ? 0 : this.business.type;
 	}
-	
+
 	public List<SceneGadget> getGarbageGadgets() {
 		return this.garbages == null ? null : this.garbages.gadgets;
 	}
@@ -95,7 +95,7 @@ public class SceneGroup {
 		}
 
 		this.script = cs;
-		
+
 		// Eval script
 		try {
 			cs.eval(bindings);
@@ -116,7 +116,7 @@ public class SceneGroup {
 			suites = ScriptLoader.getSerializer().toList(SceneSuite.class, bindings.get("suites"));
 			regions = ScriptLoader.getSerializer().toList(SceneRegion.class, bindings.get("regions"));
 			init_config = ScriptLoader.getSerializer().toObject(SceneInitConfig.class, bindings.get("init_config"));
-			
+
 			// Garbages TODO fix properly later
 			Object garbagesValue = bindings.get("garbages");
 			if (garbagesValue != null && garbagesValue instanceof LuaValue garbagesTable) {
@@ -126,7 +126,7 @@ public class SceneGroup {
 					garbages.gadgets.forEach(m -> m.group = this);
 				}
 			}
-			
+
 			// Add variables to suite
 			variables = ScriptLoader.getSerializer().toList(SceneVar.class, bindings.get("variables"));
 			// NPC in groups
@@ -138,9 +138,9 @@ public class SceneGroup {
 			for (SceneSuite suite : suites) {
 				suite.sceneMonsters = new ArrayList<>(
 						suite.monsters.stream()
-						.filter(monsters::containsKey)
-						.map(monsters::get)
-						.toList()
+								.filter(monsters::containsKey)
+								.map(monsters::get)
+								.toList()
 				);
 
 				suite.sceneGadgets = new ArrayList<>(
@@ -161,7 +161,7 @@ public class SceneGroup {
 		} catch (ScriptException e) {
 			Grasscutter.getLogger().error("Error loading group " + id + " in scene " + sceneId, e);
 		}
-		
+
 		Grasscutter.getLogger().info("group {} in scene {} is loaded successfully.", id, sceneId);
 		return this;
 	}

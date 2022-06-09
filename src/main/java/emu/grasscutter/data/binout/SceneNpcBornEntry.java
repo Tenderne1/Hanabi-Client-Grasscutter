@@ -1,4 +1,4 @@
-package emu.grasscutter.data.custom;
+package emu.grasscutter.data.binout;
 
 import emu.grasscutter.utils.Position;
 import lombok.AccessLevel;
@@ -10,10 +10,10 @@ import java.util.List;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SceneNpcBornEntry {
-    int id;
-    int configId;
-    Position pos;
-    Position rot;
-    int groupId;
-    List<Integer> suiteIdList;
+    int _id;
+    int _configId;
+    Position _pos;
+    Position _rot;
+    int _groupId;
+    List<Integer> _suiteIdList;
 }

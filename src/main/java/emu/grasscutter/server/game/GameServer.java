@@ -187,7 +187,7 @@ public final class GameServer extends KcpServer {
 		
 		// Check database if character isnt here
 		if (player == null) {
-			player = DatabaseHelper.getPlayerById(id);
+			player = DatabaseHelper.getPlayerByUid(id);
 		}
 		
 		return player;

@@ -66,7 +66,7 @@ public final class AccountCommand implements CommandHandler {
                 
                 // Get the player for the account.
                 // If that player is currently online, we kick them before proceeding with the deletion.
-                Player player = Grasscutter.getGameServer().getPlayerByAccountId(toDelete.getId());
+                Player player = Grasscutter.getGameServer().getPlayerByUid(toDelete.getReservedPlayerUid());
                 if (player != null) {
                     player.getSession().close();
                 }

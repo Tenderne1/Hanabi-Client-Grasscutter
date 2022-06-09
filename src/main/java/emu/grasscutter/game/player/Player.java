@@ -2,8 +2,9 @@ package emu.grasscutter.game.player;
 
 import dev.morphia.annotations.*;
 import emu.grasscutter.GameConstants;
+import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
-import emu.grasscutter.data.def.PlayerLevelData;
+import emu.grasscutter.data.excels.PlayerLevelData;
 import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.Account;
 import emu.grasscutter.game.CoopRequest;
@@ -11,9 +12,9 @@ import emu.grasscutter.game.ability.AbilityManager;
 import emu.grasscutter.game.avatar.Avatar;
 import emu.grasscutter.game.avatar.AvatarProfileData;
 import emu.grasscutter.game.avatar.AvatarStorage;
-import emu.grasscutter.game.entity.EntityGadget;
-import emu.grasscutter.game.entity.EntityItem;
-import emu.grasscutter.game.entity.GameEntity;
+import emu.grasscutter.game.dungeons.challenge.DungeonChallenge;
+import emu.grasscutter.game.entity.*;
+import emu.grasscutter.game.managers.DeforestationManager.DeforestationManager;
 import emu.grasscutter.game.expedition.ExpeditionInfo;
 import emu.grasscutter.game.friends.FriendsList;
 import emu.grasscutter.game.friends.PlayerProfile;
@@ -22,9 +23,12 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.inventory.Inventory;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.mail.MailHandler;
+import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.game.managers.SotSManager;
+import emu.grasscutter.game.managers.EnergyManager.EnergyManager;
 import emu.grasscutter.game.props.ActionReason;
+import emu.grasscutter.game.props.EntityType;
 import emu.grasscutter.game.props.PlayerProperty;
 import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.quest.QuestManager;
@@ -48,6 +52,7 @@ import emu.grasscutter.server.event.player.PlayerJoinEvent;
 import emu.grasscutter.server.event.player.PlayerQuitEvent;
 import emu.grasscutter.server.game.GameServer;
 import emu.grasscutter.server.game.GameSession;
+import emu.grasscutter.server.game.GameSession.SessionState;
 import emu.grasscutter.server.packet.send.*;
 import emu.grasscutter.utils.DateHelper;
 import emu.grasscutter.utils.Position;
@@ -75,11 +80,13 @@ public class Player {
 	private Position pos;
 	private Position rotation;
 	private PlayerBirthday birthday;
+	private PlayerCodex codex;
 
 	private Map<Integer, Integer> properties;
 	private Set<Integer> nameCardList;
 	private Set<Integer> flyCloakList;
 	private Set<Integer> costumeList;
+	private Set<Integer> unlockedForgingBlueprints;
 
 	private Integer widgetId;
 
@@ -98,7 +105,7 @@ public class Player {
 	@Transient private MessageHandler messageHandler;
 	@Transient private AbilityManager abilityManager;
 	@Transient private QuestManager questManager;
-	
+
 	@Transient private SotSManager sotsManager;
 
 	private TeamManager teamManager;
@@ -140,10 +147,12 @@ public class Player {
 
 	@Transient private MapMarksManager mapMarksManager;
 	@Transient private StaminaManager staminaManager;
+	@Transient private EnergyManager energyManager;
+	@Transient private DeforestationManager deforestationManager;
+	@Transient private InsectCaptureManager insectCaptureManager;
 
 	private long springLastUsed;
 	private HashMap<String, MapMark> mapMarks;
-
 
 	@Deprecated
 	@SuppressWarnings({"rawtypes", "unchecked"}) // Morphia only!
@@ -154,6 +163,9 @@ public class Player {
 		this.mailHandler = new MailHandler(this);
 		this.towerManager = new TowerManager(this);
 		this.abilityManager = new AbilityManager(this);
+		this.deforestationManager = new DeforestationManager(this);
+		this.insectCaptureManager = new InsectCaptureManager(this);
+
 		this.setQuestManager(new QuestManager(this));
 		this.pos = new Position();
 		this.rotation = new Position();
@@ -169,6 +181,7 @@ public class Player {
 		this.nameCardList = new HashSet<>();
 		this.flyCloakList = new HashSet<>();
 		this.costumeList = new HashSet<>();
+		this.unlockedForgingBlueprints = new HashSet<>();
 
 		this.setSceneId(3);
 		this.setRegionId(1);
@@ -183,6 +196,7 @@ public class Player {
 		this.birthday = new PlayerBirthday();
 		this.rewardedLevels = new HashSet<>();
 		this.moonCardGetTimes = new HashSet<>();
+		this.codex = new PlayerCodex(this);
 
 		this.shopLimit = new ArrayList<>();
 		this.expeditionInfo = new HashMap<>();
@@ -190,6 +204,7 @@ public class Player {
 		this.mapMarksManager = new MapMarksManager(this);
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
+		this.energyManager = new EnergyManager(this);
 	}
 
 	// On player creation
@@ -202,6 +217,7 @@ public class Player {
 		this.signature = "";
 		this.teamManager = new TeamManager(this);
 		this.birthday = new PlayerBirthday();
+		this.codex = new PlayerCodex(this);
 		this.setProperty(PlayerProperty.PROP_PLAYER_LEVEL, 1);
 		this.setProperty(PlayerProperty.PROP_IS_SPRING_AUTO_USE, 1);
 		this.setProperty(PlayerProperty.PROP_SPRING_AUTO_USE_PERCENT, 50);
@@ -218,6 +234,8 @@ public class Player {
 		this.mapMarksManager = new MapMarksManager(this);
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
+		this.energyManager = new EnergyManager(this);
+		this.deforestationManager = new DeforestationManager(this);
 	}
 
 	public int getUid() {
@@ -239,7 +257,6 @@ public class Player {
 
 	public void setAccount(Account account) {
 		this.account = account;
-		this.account.setPlayerId(getUid());
 	}
 
 	public GameSession getSession() {
@@ -357,7 +374,7 @@ public class Player {
 	public int getWorldLevel() {
 		return this.getProperty(PlayerProperty.PROP_PLAYER_WORLD_LEVEL);
 	}
-	
+
 	public void setWorldLevel(int level) {
 		this.setProperty(PlayerProperty.PROP_PLAYER_WORLD_LEVEL, level);
 		this.sendPacket(new PacketPlayerPropNotify(this, PlayerProperty.PROP_PLAYER_WORLD_LEVEL));
@@ -380,7 +397,7 @@ public class Player {
 		this.setProperty(PlayerProperty.PROP_PLAYER_SCOIN, mora);
 		this.sendPacket(new PacketPlayerPropNotify(this, PlayerProperty.PROP_PLAYER_SCOIN));
 	}
-	
+
 	public int getCrystals() {
 		return this.getProperty(PlayerProperty.PROP_PLAYER_MCOIN);
 	}
@@ -456,9 +473,11 @@ public class Player {
 		return questManager;
 	}
 
+
 	public void setQuestManager(QuestManager questManager) {
 		this.questManager = questManager;
 	}
+
 
 	public PlayerGachaInfo getGachaInfo() {
 		return gachaInfo;
@@ -497,10 +516,14 @@ public class Player {
 		return this.nameCardList;
 	}
 
-	public MpSettingType getMpSetting() {
-		return MpSettingType.MP_SETTING_ENTER_AFTER_APPLY; // TEMP
+	public Set<Integer> getUnlockedForgingBlueprints() {
+		return unlockedForgingBlueprints;
 	}
-	
+
+	public MpSettingType getMpSetting() {
+		return MpSettingType.MP_SETTING_TYPE_ENTER_AFTER_APPLY; // TEMP
+	}
+
 	public Queue<AttackResult> getAttackResults() {
 		return this.attackResults;
 	}
@@ -687,7 +710,7 @@ public class Player {
 		remainCalendar.add(Calendar.DATE, moonCardDuration);
 		Date theLastDay = remainCalendar.getTime();
 		Date now = DateHelper.onlyYearMonthDay(new Date());
-		return (int) ((theLastDay.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)); // By copilot 
+		return (int) ((theLastDay.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)); // By copilot
 	}
 
 	public void rechargeMoonCard() {
@@ -750,7 +773,6 @@ public class Player {
 		return expeditionInfo.get(avaterGuid);
 	}
 
-
 	public List<ShopLimit> getShopLimit() {
 		return shopLimit;
 	}
@@ -802,7 +824,7 @@ public class Player {
 		this.hasSentAvatarDataNotify = hasSentAvatarDataNotify;
 	}
 
-	public void addAvatar(Avatar avatar) {
+	public void addAvatar(Avatar avatar, boolean addToCurrentTeam) {
 		boolean result = getAvatars().addAvatar(avatar);
 
 		if (result) {
@@ -813,12 +835,20 @@ public class Player {
 			if (hasSentAvatarDataNotify()) {
 				// Recalc stats
 				avatar.recalcStats();
-				// Packet
-				sendPacket(new PacketAvatarAddNotify(avatar, false));
+				// Packet, show notice on left if the avatar will be added to the team
+				sendPacket(new PacketAvatarAddNotify(avatar, addToCurrentTeam && this.getTeamManager().canAddAvatarToCurrentTeam()));
+				if (addToCurrentTeam) {
+					// If space in team, add
+					this.getTeamManager().addAvatarToCurrentTeam(avatar);
+				}
 			}
 		} else {
 			// Failed adding avatar
 		}
+	}
+
+	public void addAvatar(Avatar avatar) {
+		addAvatar(avatar, true);
 	}
 
 	public void addFlycloak(int flycloakId) {
@@ -877,7 +907,7 @@ public class Player {
 	}
 
 	public Mail getMail(int index) { return this.getMailHandler().getMailById(index); }
-	
+
 	public int getMailId(Mail message) {
 		return this.getMailHandler().getMailIndex(message);
 	}
@@ -885,7 +915,7 @@ public class Player {
 	public boolean replaceMailByIndex(int index, Mail message) {
 		return this.getMailHandler().replaceMailByIndex(index, message);
 	}
-	
+
 	public void interactWith(int gadgetEntityId, InterOpTypeOuterClass.InterOpType opType) {
 		GameEntity entity = getScene().getEntityById(gadgetEntityId);
 
@@ -910,25 +940,28 @@ public class Player {
 			if (success) {
 
 				if (!drop.isShare()) // not shared drop
-					this.sendPacket(new PacketGadgetInteractRsp(drop, InteractType.INTERACT_PICK_ITEM));
+					this.sendPacket(new PacketGadgetInteractRsp(drop, InteractType.INTERACT_TYPE_PICK_ITEM));
 				else
-					this.getScene().broadcastPacket(new PacketGadgetInteractRsp(drop, InteractType.INTERACT_PICK_ITEM));
+					this.getScene().broadcastPacket(new PacketGadgetInteractRsp(drop, InteractType.INTERACT_TYPE_PICK_ITEM));
 			}
 		} else if (entity instanceof EntityGadget gadget) {
-			if (gadget.getContent() == null) {
-				return;
+			if (gadget.getGadgetData().getType() == EntityType.RewardStatue) {
+				if (scene.getChallenge() != null) {
+					if (scene.getChallenge() instanceof DungeonChallenge dungeonChallenge)
+						dungeonChallenge.getStatueDrops(this);
+				}
+				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
 			}
-			
-			boolean shouldDelete = gadget.getContent().onInteract(this, opType);
-			
-			if (shouldDelete) {
-				entity.getScene().removeEntity(entity);
-			}
+		} else if (entity instanceof EntityMonster monster) {
+			insectCaptureManager.arrestSmallCreature(monster);
+		} else if (entity instanceof EntityVehicle vehicle) {// try to arrest it, example: glowworm
+			insectCaptureManager.arrestSmallCreature(vehicle);
 		} else {
 			// Delete directly
 			entity.getScene().removeEntity(entity);
 		}
 	}
+
 
 	public void onPause() {
 		getStaminaManager().stopSustainedStaminaHandler();
@@ -974,6 +1007,9 @@ public class Player {
 		return this.birthday.getDay() > 0;
 	}
 
+
+	public PlayerCodex getCodex(){ return this.codex; }
+
 	public Set<Integer> getRewardedLevels() {
 		return rewardedLevels;
 	}
@@ -998,8 +1034,8 @@ public class Player {
 				}
 			}
 		} else {
-			List<Integer> showAvatarList = DatabaseHelper.getPlayerById(id).getShowAvatarList();
-			AvatarStorage avatars = DatabaseHelper.getPlayerById(id).getAvatars();
+			List<Integer> showAvatarList = DatabaseHelper.getPlayerByUid(id).getShowAvatarList();
+			AvatarStorage avatars = DatabaseHelper.getPlayerByUid(id).getAvatars();
 			avatars.loadFromDatabase();
 			if (showAvatarList != null) {
 				for (int avatarId : showAvatarList) {
@@ -1039,7 +1075,7 @@ public class Player {
 			player = this;
 			shouldRecalc = false;
 		} else {
-			player = DatabaseHelper.getPlayerById(id);
+			player = DatabaseHelper.getPlayerByUid(id);
 			player.getAvatars().loadFromDatabase();
 			player.getInventory().loadFromDatabase();
 			shouldRecalc = true;
@@ -1058,7 +1094,7 @@ public class Player {
 		}
 		return showAvatarInfoList;
 	}
-	
+
 	public PlayerWorldLocationInfoOuterClass.PlayerWorldLocationInfo getWorldPlayerLocationInfo() {
 		return PlayerWorldLocationInfoOuterClass.PlayerWorldLocationInfo.newBuilder()
 				.setSceneId(this.getSceneId())
@@ -1082,8 +1118,16 @@ public class Player {
 
 	public SotSManager getSotSManager() { return sotsManager; }
 
+	public EnergyManager getEnergyManager() {
+		return this.energyManager;
+	}
+
 	public AbilityManager getAbilityManager() {
 		return abilityManager;
+	}
+
+	public DeforestationManager getDeforestationManager() {
+		return deforestationManager;
 	}
 
 	public HashMap<String, MapMark> getMapMarks() { return mapMarks; }
@@ -1101,7 +1145,10 @@ public class Player {
 		while (it.hasNext()) {
 			CoopRequest req = it.next();
 			if (req.isExpired()) {
-				req.getRequester().sendPacket(new PacketPlayerApplyEnterMpResultNotify(this, false, PlayerApplyEnterMpResultNotifyOuterClass.PlayerApplyEnterMpResultNotify.Reason.SYSTEM_JUDGE));
+				req.getRequester().sendPacket(new PacketPlayerApplyEnterMpResultNotify(
+						this,
+						false,
+						PlayerApplyEnterMpResultNotifyOuterClass.PlayerApplyEnterMpResultNotify.Reason.REASON_SYSTEM_JUDGE));
 				it.remove();
 			}
 		}
@@ -1137,14 +1184,13 @@ public class Player {
 	}
 
 
-
-
 	public void resetSendPlayerLocTime() {
 		this.nextSendPlayerLocTime = System.currentTimeMillis() + 5000;
 	}
 
 	@PostLoad
 	private void onLoad() {
+		this.getCodex().setPlayer(this);
 		this.getTeamManager().setPlayer(this);
 		this.getTowerManager().setPlayer(this);
 	}
@@ -1153,10 +1199,14 @@ public class Player {
 		DatabaseHelper.savePlayer(this);
 	}
 
-	public void onLogin() {
+	// Called from tokenrsp
+	public void loadFromDatabase() {
 		// Make sure these exist
 		if (this.getTeamManager() == null) {
 			this.teamManager = new TeamManager(this);
+		}
+		if (this.getCodex() == null) {
+			this.codex = new PlayerCodex(this);
 		}
 		if (this.getProfile().getUid() == 0) {
 			this.getProfile().syncWithCharacter(this);
@@ -1177,7 +1227,15 @@ public class Player {
 		this.getFriendsList().loadFromDatabase();
 		this.getMailHandler().loadFromDatabase();
 		this.getQuestManager().loadFromDatabase();
-		
+
+		// Add to gameserver (Always handle last)
+		if (getSession().isActive()) {
+			getServer().registerPlayer(this);
+			getProfile().setPlayer(this); // Set online
+		}
+	}
+
+	public void onLogin() {
 		// Quest - Commented out because a problem is caused if you log out while this quest is active
 		/*
 		if (getQuestManager().getMainQuestById(351) == null) {
@@ -1185,23 +1243,16 @@ public class Player {
 			if (quest != null) {
 				quest.finish();
 			}
-
 			getQuestManager().addQuest(35101);
-			
+
 			this.setSceneId(3);
 			this.getPos().set(GameConstants.START_POSITION);
 		}
 		*/
-		
+
 		// Create world
 		World world = new World(this);
 		world.addPlayer(this);
-
-		// Add to gameserver
-		if (getSession().isActive()) {
-			getServer().registerPlayer(this);
-			getProfile().setPlayer(this); // Set online
-		}
 
 		// Multiplayer setting
 		this.setProperty(PlayerProperty.PROP_PLAYER_MP_SETTING_TYPE, this.getMpSetting().getNumber());
@@ -1215,11 +1266,11 @@ public class Player {
 		session.send(new PacketFinishedParentQuestNotify(this));
 		session.send(new PacketQuestListNotify(this));
 		session.send(new PacketCodexDataFullNotify(this));
-		session.send(new PacketServerCondMeetQuestListUpdateNotify(this));
 		session.send(new PacketAllWidgetDataNotify(this));
 		session.send(new PacketWidgetGadgetAllDataNotify());
 		session.send(new PacketPlayerHomeCompInfoNotify(this));
 		session.send(new PacketHomeComfortInfoNotify(this));
+		session.send(new PacketForgeDataNotify(this));
 
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
@@ -1229,6 +1280,9 @@ public class Player {
 
 		// First notify packets sent
 		this.setHasSentAvatarDataNotify(true);
+
+		// Set session state
+		session.setState(SessionState.ACTIVE);
 
 		// Call join event.
 		PlayerJoinEvent event = new PlayerJoinEvent(this); event.call();
@@ -1259,9 +1313,12 @@ public class Player {
 		this.save();
 		this.getTeamManager().saveAvatars();
 		this.getFriendsList().save();
-		
+
 		// Call quit event.
 		PlayerQuitEvent event = new PlayerQuitEvent(this); event.call();
+
+		//reset wood
+		getDeforestationManager().resetWood();
 	}
 
 	public enum SceneLoadState {
