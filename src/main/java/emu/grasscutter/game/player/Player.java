@@ -141,6 +141,7 @@ public class Player {
 	@Transient private SceneLoadState sceneState;
 	@Transient private boolean hasSentAvatarDataNotify;
 	@Transient private long nextSendPlayerLocTime = 0;
+	@Transient private long playerElementBurstInvincibleEndTime = 0;
 
 	@Transient private final Int2ObjectMap<CoopRequest> coopRequests;
 	@Transient private final Queue<AttackResult> attackResults;
@@ -1334,6 +1335,14 @@ public class Player {
 
 		//reset wood
 		getDeforestationManager().resetWood();
+	}
+
+	public long getPlayerElementBurstInvincibleEndTime() {
+		return playerElementBurstInvincibleEndTime;
+	}
+
+	public void setPlayerElementBurstInvincibleEndTime(long playerElementBurstInvincibleEndTime) {
+		this.playerElementBurstInvincibleEndTime = playerElementBurstInvincibleEndTime;
 	}
 
 	public enum SceneLoadState {

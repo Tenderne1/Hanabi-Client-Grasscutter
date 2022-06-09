@@ -1,6 +1,7 @@
 package emu.grasscutter.server.game;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -19,27 +20,31 @@ import emu.grasscutter.server.event.game.SendPacketEvent;
 import emu.grasscutter.utils.Crypto;
 import emu.grasscutter.utils.FileUtils;
 import emu.grasscutter.utils.Utils;
-import io.jpower.kcp.netty.UkcpChannel;
+import io.jpower.kcp.netty.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import org.reflections8.ReflectionUtils;
 
 import static emu.grasscutter.utils.Language.translate;
 import static emu.grasscutter.Configuration.*;
 
 public class GameSession extends KcpChannel {
 	private final GameServer server;
-
+	
 	private Account account;
 	private Player player;
-
+	
 	private boolean useSecretKey;
 	private SessionState state;
-
+	
 	private int clientTime;
 	private long lastPingTime;
 	private int lastClientSeq = 10;
+
+	// nano time of lag
+	private int lag;
 
 	private final ChannelPipeline pipeline;
 	@Override
@@ -65,11 +70,11 @@ public class GameSession extends KcpChannel {
 			pipeline.addLast(this);
 		}
 	}
-
+	
 	public GameServer getServer() {
 		return server;
 	}
-
+	
 	public InetSocketAddress getAddress() {
 		if (this.getChannel() == null) {
 			return null;
@@ -80,7 +85,7 @@ public class GameSession extends KcpChannel {
 	public boolean useSecretKey() {
 		return useSecretKey;
 	}
-
+	
 	public Account getAccount() {
 		return account;
 	}
@@ -88,7 +93,7 @@ public class GameSession extends KcpChannel {
 	public void setAccount(Account account) {
 		this.account = account;
 	}
-
+	
 	public String getAccountId() {
 		return this.getAccount().getId();
 	}
@@ -118,7 +123,7 @@ public class GameSession extends KcpChannel {
 	public void setUseSecretKey(boolean useSecretKey) {
 		this.useSecretKey = useSecretKey;
 	}
-
+	
 	public int getClientTime() {
 		return this.clientTime;
 	}
@@ -126,16 +131,16 @@ public class GameSession extends KcpChannel {
 	public long getLastPingTime() {
 		return lastPingTime;
 	}
-
+	
 	public void updateLastPingTime(int clientTime) {
 		this.clientTime = clientTime;
 		this.lastPingTime = System.currentTimeMillis();
 	}
-
+	
 	public int getNextClientSequence() {
 		return ++lastClientSeq;
 	}
-
+	
 	@Override
 	protected void onConnect() {
 		Grasscutter.getLogger().info(translate("messages.game.connect", this.getAddress().getHostString().toLowerCase()));
@@ -160,55 +165,55 @@ public class GameSession extends KcpChannel {
 
 		}
 	}
-
-	protected void logPacket(ByteBuffer buf) {
+	
+    protected void logPacket(ByteBuffer buf) {
 		ByteBuf b = Unpooled.wrappedBuffer(buf.array());
-		logPacket(b);
-	}
-
-	public void replayPacket(int opcode, String name) {
-		String filePath = PACKET(name);
+    	logPacket(b);
+    }
+    
+    public void replayPacket(int opcode, String name) {
+    	String filePath = PACKET(name);
 		File p = new File(filePath);
-
+		
 		if (!p.exists()) return;
 
 		byte[] packet = FileUtils.read(p);
-
+		
 		BasePacket basePacket = new BasePacket(opcode);
 		basePacket.setData(packet);
-
+		
 		send(basePacket);
-	}
-
-	public void send(BasePacket packet) {
-		// Test
-		if (packet.getOpcode() <= 0) {
-			Grasscutter.getLogger().warn("Tried to send packet with missing cmd id!");
-			return;
-		}
+    }
+    
+    public void send(BasePacket packet) {
+    	// Test
+    	if (packet.getOpcode() <= 0) {
+    		Grasscutter.getLogger().warn("Tried to send packet with missing cmd id!");
+    		return;
+    	}
 
 		// DO NOT REMOVE (unless we find a way to validate code before sending to client which I don't think we can)
 		// Stop WindSeedClientNotify from being sent for security purposes.
 		if(PacketOpcodes.BANNED_PACKETS.contains(packet.getOpcode())) {
 			return;
 		}
-
-		// Header
-		if (packet.shouldBuildHeader()) {
-			packet.buildHeader(this.getNextClientSequence());
-		}
-
-		// Log
-		if (SERVER.debugLevel == ServerDebugMode.ALL) {
-			logPacket(packet);
-		}
-
+    	
+    	// Header
+    	if (packet.shouldBuildHeader()) {
+    		packet.buildHeader(this.getNextClientSequence());
+    	}
+    	
+    	// Log
+    	if (SERVER.debugLevel == ServerDebugMode.ALL) {
+    		logPacket(packet);
+    	}
+		
 		// Invoke event.
 		SendPacketEvent event = new SendPacketEvent(this, packet); event.call();
-		if(!event.isCanceled()) // If event is not cancelled, continue.
+    	if(!event.isCanceled()) // If event is not cancelled, continue.
 			this.send(event.getPacket().build());
-	}
-
+    }
+    
 	private static final Set<Integer> loopPacket = Set.of(
 			PacketOpcodes.PingReq,
 			PacketOpcodes.PingRsp,
@@ -217,23 +222,24 @@ public class GameSession extends KcpChannel {
 			PacketOpcodes.QueryPathReq
 	);
 
-	private void logPacket(BasePacket packet) {
+    private void logPacket(BasePacket packet) {
 		if (!loopPacket.contains(packet.getOpcode())) {
 			Grasscutter.getLogger().info("SEND: " + PacketOpcodesUtil.getOpcodeName(packet.getOpcode()) + " (" + packet.getOpcode() + ")");
 			System.out.println(Utils.bytesToHex(packet.getData()));
 		}
-	}
+    }
 
 	@Override
 	public void onMessage(ChannelHandlerContext ctx, ByteBuf data) {
 		// Decrypt and turn back into a packet
+		updateLag();
 		byte[] byteData = Utils.byteBufToArray(data);
 		Crypto.xor(byteData, useSecretKey() ? Crypto.ENCRYPT_KEY : Crypto.DISPATCH_KEY);
 		ByteBuf packet = Unpooled.wrappedBuffer(byteData);
-
+		
 		// Log
 		//logPacket(packet);
-
+		
 		// Handle
 		try {
 			while (packet.readableBytes() > 0) {
@@ -241,7 +247,7 @@ public class GameSession extends KcpChannel {
 				if (packet.readableBytes() < 12) {
 					return;
 				}
-
+				
 				// Packet sanity check
 				int const1 = packet.readShort();
 				if (const1 != 17767) {
@@ -252,19 +258,19 @@ public class GameSession extends KcpChannel {
 				int opcode = packet.readShort();
 				int headerLength = packet.readShort();
 				int payloadLength = packet.readInt();
-
+				
 				byte[] header = new byte[headerLength];
 				byte[] payload = new byte[payloadLength];
-
+				
 				packet.readBytes(header);
 				packet.readBytes(payload);
-
+				
 				// Sanity check #2
 				int const2 = packet.readShort();
 				if (const2 != -30293) {
 					return; // Bad packet
 				}
-
+				
 				// Log packet
 				if (SERVER.debugLevel == ServerDebugMode.ALL) {
 					if (!loopPacket.contains(opcode)) {
@@ -272,7 +278,7 @@ public class GameSession extends KcpChannel {
 						System.out.println(Utils.bytesToHex(payload));
 					}
 				}
-
+				
 				// Handle
 				getServer().getPacketHandler().handle(this, opcode, header, payload);
 			}
@@ -282,6 +288,35 @@ public class GameSession extends KcpChannel {
 			data.release();
 			packet.release();
 		}
+	}
+
+	private void updateLag() {
+		final UkcpServerChildChannel channel = (UkcpServerChildChannel) super.getChannel();
+		final Set<Field> fields = ReflectionUtils.getFields(UkcpServerChildChannel.class, v -> "ukcp".equals(v.getName()));
+		if (!fields.isEmpty()) {
+			try {
+				Ukcp ukcp = (Ukcp) getFieldValue(channel, fields);
+				final Set<Field> fieldsOfUkcp = ReflectionUtils.getFields(Ukcp.class, v -> "kcp".equals(v.getName()));
+				if (!fieldsOfUkcp.isEmpty()) {
+					final Kcp kcp = (Kcp) getFieldValue(ukcp, fieldsOfUkcp);
+					final KcpMetric metric = kcp.getMetric();
+					final int srtt = metric.srtt();
+					this.lag = srtt / 2;
+				}
+			} catch (Exception e) {
+
+			}
+		}
+	}
+
+	private Object getFieldValue(Object ukcp, Set<Field> fieldsOfUkcp) throws IllegalAccessException {
+		final Field kcpField = fieldsOfUkcp.iterator().next();
+		kcpField.setAccessible(true);
+		return kcpField.get(ukcp);
+	}
+
+	public int getLag() {
+		return lag;
 	}
 
 	public enum SessionState {
