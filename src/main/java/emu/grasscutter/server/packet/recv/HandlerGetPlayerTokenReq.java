@@ -38,7 +38,7 @@ public class HandlerGetPlayerTokenReq extends PacketHandler {
 		// NOTE: CHECKING MUST SITUATED HERE (BEFORE getPlayerByUid)! because to save firstly ,to load secondly !!!
 		// TODO - optimize
 		boolean kicked = false;
-		Player exists = Grasscutter.getGameServer().getPlayerByUid(account.getReservedPlayerUid());
+		Player exists = Grasscutter.getGameServer().getPlayerByAccountId(account.getId());
 		if (exists != null) {
 			GameSession existsSession = exists.getSession();
 			if (existsSession != session) {// No self-kicking
