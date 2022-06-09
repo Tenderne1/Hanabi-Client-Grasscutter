@@ -36,6 +36,7 @@ import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.quest.QuestManager;
 import emu.grasscutter.game.shop.ShopLimit;
 import emu.grasscutter.game.managers.MapMarkManager.*;
+import emu.grasscutter.game.tower.TowerData;
 import emu.grasscutter.game.tower.TowerManager;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.game.world.World;
@@ -113,7 +114,9 @@ public class Player {
 
 	private TeamManager teamManager;
 
-	private TowerManager towerManager;
+	@Transient private TowerManager towerManager;
+	private TowerData towerData;
+
 	private PlayerGachaInfo gachaInfo;
 	private PlayerProfile playerProfile;
 	private boolean showAvatar;
@@ -475,6 +478,10 @@ public class Player {
 
 	public TowerManager getTowerManager() {
 		return towerManager;
+	}
+
+	public TowerData getTowerData() {
+		return towerData;
 	}
 
 	public QuestManager getQuestManager() {
@@ -1218,6 +1225,9 @@ public class Player {
 	// Called from tokenrsp
 	public void loadFromDatabase() {
 		// Make sure these exist
+		if (this.getTowerManager() == null) {
+			this.towerManager = new TowerManager(this);
+		}
 		if (this.getTeamManager() == null) {
 			this.teamManager = new TeamManager(this);
 		}
@@ -1234,7 +1244,8 @@ public class Player {
 		if (exists != null) {
 			exists.getSession().close();
 		}
-
+		//Make sure towerManager's player is online player
+		this.getTowerManager().setPlayer(this);
 		// Load from db
 		this.getAvatars().loadFromDatabase();
 		this.getInventory().loadFromDatabase();
