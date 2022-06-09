@@ -23,6 +23,8 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.inventory.Inventory;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.mail.MailHandler;
+import emu.grasscutter.game.managers.ForgingManager.ActiveForgeData;
+import emu.grasscutter.game.managers.ForgingManager.ForgingManager;
 import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.game.managers.SotSManager;
@@ -87,6 +89,7 @@ public class Player {
 	private Set<Integer> flyCloakList;
 	private Set<Integer> costumeList;
 	private Set<Integer> unlockedForgingBlueprints;
+	private List<ActiveForgeData> activeForges;
 
 	private Integer widgetId;
 
@@ -148,6 +151,7 @@ public class Player {
 	@Transient private MapMarksManager mapMarksManager;
 	@Transient private StaminaManager staminaManager;
 	@Transient private EnergyManager energyManager;
+	@Transient private ForgingManager forgingManager;
 	@Transient private DeforestationManager deforestationManager;
 	@Transient private InsectCaptureManager insectCaptureManager;
 
@@ -182,6 +186,7 @@ public class Player {
 		this.flyCloakList = new HashSet<>();
 		this.costumeList = new HashSet<>();
 		this.unlockedForgingBlueprints = new HashSet<>();
+		this.activeForges = new ArrayList<>();
 
 		this.setSceneId(3);
 		this.setRegionId(1);
@@ -205,6 +210,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.forgingManager = new ForgingManager(this);
 	}
 
 	// On player creation
@@ -235,6 +241,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.forgingManager = new ForgingManager(this);
 		this.deforestationManager = new DeforestationManager(this);
 	}
 
@@ -518,6 +525,10 @@ public class Player {
 
 	public Set<Integer> getUnlockedForgingBlueprints() {
 		return unlockedForgingBlueprints;
+	}
+
+	public List<ActiveForgeData> getActiveForges() {
+		return this.activeForges;
 	}
 
 	public MpSettingType getMpSetting() {
@@ -1122,6 +1133,10 @@ public class Player {
 		return this.energyManager;
 	}
 
+	public ForgingManager getForgingManager() {
+		return this.forgingManager;
+	}
+
 	public AbilityManager getAbilityManager() {
 		return abilityManager;
 	}
@@ -1270,7 +1285,7 @@ public class Player {
 		session.send(new PacketWidgetGadgetAllDataNotify());
 		session.send(new PacketPlayerHomeCompInfoNotify(this));
 		session.send(new PacketHomeComfortInfoNotify(this));
-		session.send(new PacketForgeDataNotify(this));
+		this.forgingManager.sendForgeDataNotify();
 
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
