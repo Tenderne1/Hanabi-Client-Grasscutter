@@ -47,7 +47,8 @@ public class DungeonManager {
 		if (data == null) {
 			return false;
 		}
-		Grasscutter.getLogger().info("{}({}) is trying to enter dungeon {}" ,player.getNickname(),player.getUid(),dungeonId);
+		
+		Grasscutter.getLogger().info(player.getNickname() + " is trying to enter dungeon " + dungeonId);
 		
 		int sceneId = data.getSceneId();
 		player.getScene().setPrevScene(sceneId);
@@ -71,7 +72,7 @@ public class DungeonManager {
 		if (data == null) {
 			return false;
 		}
-		Grasscutter.getLogger().info("{}({}) is trying to enter tower dungeon {}" ,player.getNickname(),player.getUid(),dungeonId);
+		Grasscutter.getLogger().info(player.getNickname() + " is trying to enter tower dungeon " + dungeonId);
 
 		if(player.getWorld().transferPlayerToScene(player, data.getSceneId(), data)){
 			dungeonSettleListeners.forEach(player.getScene()::addDungeonSettleObserver);
