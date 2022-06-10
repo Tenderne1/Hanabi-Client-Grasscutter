@@ -23,6 +23,8 @@ import emu.grasscutter.game.inventory.GameItem;
 import emu.grasscutter.game.inventory.Inventory;
 import emu.grasscutter.game.mail.Mail;
 import emu.grasscutter.game.mail.MailHandler;
+import emu.grasscutter.game.managers.ForgingManager.ActiveForgeData;
+import emu.grasscutter.game.managers.ForgingManager.ForgingManager;
 import emu.grasscutter.game.managers.InsectCaptureManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.game.managers.SotSManager;
@@ -34,7 +36,6 @@ import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.quest.QuestManager;
 import emu.grasscutter.game.shop.ShopLimit;
 import emu.grasscutter.game.managers.MapMarkManager.*;
-import emu.grasscutter.game.tower.TowerData;
 import emu.grasscutter.game.tower.TowerManager;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.game.world.World;
@@ -88,6 +89,7 @@ public class Player {
 	private Set<Integer> flyCloakList;
 	private Set<Integer> costumeList;
 	private Set<Integer> unlockedForgingBlueprints;
+	private List<ActiveForgeData> activeForges;
 
 	private Integer widgetId;
 
@@ -111,9 +113,7 @@ public class Player {
 
 	private TeamManager teamManager;
 
-	@Transient private TowerManager towerManager;
-	private TowerData towerData;
-
+	private TowerManager towerManager;
 	private PlayerGachaInfo gachaInfo;
 	private PlayerProfile playerProfile;
 	private boolean showAvatar;
@@ -152,6 +152,7 @@ public class Player {
 	@Transient private MapMarksManager mapMarksManager;
 	@Transient private StaminaManager staminaManager;
 	@Transient private EnergyManager energyManager;
+	@Transient private ForgingManager forgingManager;
 	@Transient private DeforestationManager deforestationManager;
 	@Transient private InsectCaptureManager insectCaptureManager;
 
@@ -186,6 +187,7 @@ public class Player {
 		this.flyCloakList = new HashSet<>();
 		this.costumeList = new HashSet<>();
 		this.unlockedForgingBlueprints = new HashSet<>();
+		this.activeForges = new ArrayList<>();
 
 		this.setSceneId(3);
 		this.setRegionId(1);
@@ -209,6 +211,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.forgingManager = new ForgingManager(this);
 	}
 
 	// On player creation
@@ -239,6 +242,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.forgingManager = new ForgingManager(this);
 		this.deforestationManager = new DeforestationManager(this);
 	}
 
@@ -473,10 +477,6 @@ public class Player {
 		return towerManager;
 	}
 
-	public TowerData getTowerData() {
-		return towerData;
-	}
-
 	public QuestManager getQuestManager() {
 		return questManager;
 	}
@@ -526,6 +526,10 @@ public class Player {
 
 	public Set<Integer> getUnlockedForgingBlueprints() {
 		return unlockedForgingBlueprints;
+	}
+
+	public List<ActiveForgeData> getActiveForges() {
+		return this.activeForges;
 	}
 
 	public MpSettingType getMpSetting() {
@@ -959,6 +963,16 @@ public class Player {
 						dungeonChallenge.getStatueDrops(this);
 				}
 				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
+			} else {
+				if (gadget.getContent() == null) {
+					return;
+				}
+
+				boolean shouldDelete = gadget.getContent().onInteract(this, opType);
+
+				if (shouldDelete) {
+					entity.getScene().removeEntity(entity);
+				}
 			}
 		} else if (entity instanceof EntityMonster monster) {
 			insectCaptureManager.arrestSmallCreature(monster);
@@ -1130,6 +1144,10 @@ public class Player {
 		return this.energyManager;
 	}
 
+	public ForgingManager getForgingManager() {
+		return this.forgingManager;
+	}
+
 	public AbilityManager getAbilityManager() {
 		return abilityManager;
 	}
@@ -1210,9 +1228,6 @@ public class Player {
 	// Called from tokenrsp
 	public void loadFromDatabase() {
 		// Make sure these exist
-		if (this.getTowerManager() == null) {
-			this.towerManager = new TowerManager(this);
-		}
 		if (this.getTeamManager() == null) {
 			this.teamManager = new TeamManager(this);
 		}
@@ -1229,8 +1244,7 @@ public class Player {
 		if (exists != null) {
 			exists.getSession().close();
 		}
-		//Make sure towerManager's player is online player
-		this.getTowerManager().setPlayer(this);
+
 		// Load from db
 		this.getAvatars().loadFromDatabase();
 		this.getInventory().loadFromDatabase();
@@ -1282,7 +1296,7 @@ public class Player {
 		session.send(new PacketWidgetGadgetAllDataNotify());
 		session.send(new PacketPlayerHomeCompInfoNotify(this));
 		session.send(new PacketHomeComfortInfoNotify(this));
-		session.send(new PacketForgeDataNotify(this));
+		this.forgingManager.sendForgeDataNotify();
 
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
