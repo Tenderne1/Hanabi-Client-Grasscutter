@@ -28,6 +28,7 @@ import emu.grasscutter.server.event.game.ServerTickEvent;
 import emu.grasscutter.server.event.internal.ServerStartEvent;
 import emu.grasscutter.server.event.internal.ServerStopEvent;
 import emu.grasscutter.task.TaskMap;
+import emu.grasscutter.BuildConfig;
 
 import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
@@ -59,13 +60,22 @@ public final class GameServer extends KcpServer {
 	private final CombineManger combineManger;
 	private final TowerScheduleManager towerScheduleManager;
 	private final WorldDataManager worldDataManager;
-	public GameServer() {
-		this(new InetSocketAddress(
-				GAME_INFO.bindAddress,
-				GAME_INFO.bindPort
-		));
+
+	private static InetSocketAddress getAdapterInetSocketAddress(){
+		InetSocketAddress inetSocketAddress = null;
+		if(GAME_INFO.bindAddress.equals("")){
+			inetSocketAddress=new InetSocketAddress(GAME_INFO.bindPort);
+		}else{
+			inetSocketAddress=new InetSocketAddress(
+					GAME_INFO.bindAddress,
+					GAME_INFO.bindPort
+			);
+		}
+		return inetSocketAddress;
 	}
-	
+	public GameServer() {
+		this(getAdapterInetSocketAddress());
+	}
 	public GameServer(InetSocketAddress address) {
 		super(address);
 
@@ -112,6 +122,7 @@ public final class GameServer extends KcpServer {
 	public ChatManagerHandler getChatManager() {
 		return chatManager;
 	}
+	
 	public void setChatManager(ChatManagerHandler chatManager) {
 		this.chatManager = chatManager;
 	}
@@ -191,6 +202,11 @@ public final class GameServer extends KcpServer {
 		}
 		
 		return player;
+	}
+	
+	public Player getPlayerByAccountId(String accountId) {
+		Optional<Player> playerOpt = getPlayers().values().stream().filter(player -> player.getAccount().getId().equals(accountId)).findFirst();
+		return playerOpt.orElse(null);
 	}
 	
 	public SocialDetail.Builder getSocialDetailByUid(int id) {

@@ -4,8 +4,6 @@ import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.GameDepot;
 import emu.grasscutter.data.excels.*;
-import emu.grasscutter.data.excels.DungeonData;
-import emu.grasscutter.data.excels.SceneData;
 import emu.grasscutter.game.dungeons.DungeonSettleListener;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.player.Player;
@@ -32,6 +30,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.danilopianini.util.SpatialIndex;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Scene {
 	private final World world;
@@ -378,6 +377,10 @@ public class Scene {
 			entities.add(entity);
 		}
 
+		var blocks = getPlayerActiveBlocks(player);
+		for(var block : blocks){
+			entities.addAll(loadNpcForPlayer(player, block));
+		}
 		player.sendPacket(new PacketSceneEntityAppearNotify(entities, VisionType.VISION_TYPE_MEET));
 	}
 	
@@ -401,6 +404,19 @@ public class Scene {
 	}
 	
 	public void killEntity(GameEntity target, int attackerId) {
+		GameEntity attacker = getEntityById(attackerId);
+
+		//Check codex
+		if (attacker instanceof EntityClientGadget) {
+			var clientGadgetOwner = getEntityById(((EntityClientGadget) attacker).getOwnerEntityId());
+			if(clientGadgetOwner instanceof EntityAvatar) {
+				((EntityClientGadget) attacker).getOwner().getCodex().checkAnimal(target, CodexAnimalData.CodexAnimalUnlockCondition.CODEX_COUNT_TYPE_KILL);
+			}
+		}
+		else if (attacker instanceof EntityAvatar) {
+			((EntityAvatar) attacker).getPlayer().getCodex().checkAnimal(target, CodexAnimalData.CodexAnimalUnlockCondition.CODEX_COUNT_TYPE_KILL);
+		}
+
 		// Packet
 		this.broadcastPacket(new PacketLifeStateChangeNotify(attackerId, target, LifeState.LIFE_DEAD));
 
@@ -470,7 +486,11 @@ public class Scene {
 					continue;
 				}
 				
-				EntityMonster entity = new EntityMonster(this, data, entry.getPos(), worldLevelOverride > 0 ? worldLevelOverride : entry.getLevel());
+				int level = worldLevelOverride > 0 ? worldLevelOverride + entry.getLevel() - 22 : entry.getLevel();
+				level = level >= 100 ? 100 : level;
+				level = level <= 0 ? 1 : level;
+				
+				EntityMonster entity = new EntityMonster(this, data, entry.getPos(), level);
 				entity.getRotation().set(entry.getRot());
 				entity.setGroupId(entry.getGroup().getGroupId());
 				entity.setPoseId(entry.getPoseId());
@@ -501,6 +521,9 @@ public class Scene {
 	}
 
 	public List<SceneBlock> getPlayerActiveBlocks(Player player){
+		if (getScriptManager().getBlocksIndex() == null){
+			return List.of();
+		}
 		// consider the borders' entities of blocks, so we check if contains by index
 		return SceneIndexManager.queryNeighbors(getScriptManager().getBlocksIndex(),
 				player.getPos().toXZDoubleArray(), Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
@@ -617,6 +640,8 @@ public class Scene {
 					.map(mob -> scriptManager.createMonster(group.id, group.block_id, mob))
 					.filter(Objects::nonNull)
 					.toList());
+			suiteData.sceneRegions.stream().map(region -> new EntityRegion(this, region))
+					.forEach(scriptManager::registerRegion);
 
 		}
 
@@ -640,7 +665,7 @@ public class Scene {
 				group.triggers.values().forEach(getScriptManager()::deregisterTrigger);
 			}
 			if(group.regions != null){
-				group.regions.forEach(getScriptManager()::deregisterRegion);
+				group.regions.values().forEach(getScriptManager()::deregisterRegion);
 			}
 		}
 		scriptManager.getLoadedGroupSetPerBlock().remove(block.id);
@@ -740,28 +765,29 @@ public class Scene {
 
 		var npcs = SceneIndexManager.queryNeighbors(data.getIndex(), pos.toDoubleArray(),
 				Grasscutter.getConfig().server.game.loadEntitiesForPlayerRange);
-		var entityNPCS = npcs.stream().map(item -> {
-					var group = data.getGroups().get(item.get_groupId());
+		var entityNPCS = npcs.stream()
+				.filter(item -> getEntities().values().stream()
+						.filter(e -> e instanceof EntityNPC)
+						.noneMatch(e -> e.getConfigId() == item.getConfigId()))
+				.map(item -> {
+					var group = data.getGroups().get(item.getGroupId());
 					if(group == null){
-						group = SceneGroup.of(item.get_groupId());
-						data.getGroups().putIfAbsent(item.get_groupId(), group);
+						group = SceneGroup.of(item.getGroupId());
+						data.getGroups().putIfAbsent(item.getGroupId(), group);
 						group.load(getId());
 					}
 
 					if(group.npc == null){
 						return null;
 					}
-					var npc = group.npc.get(item.get_configId());
+					var npc = group.npc.get(item.getConfigId());
 					if(npc == null){
 						return null;
 					}
 
-					return getScriptManager().createNPC(npc, block.id, item.get_suiteIdList().get(0));
+					return getScriptManager().createNPC(npc, block.id, item.getSuiteIdList().get(0));
 				})
 				.filter(Objects::nonNull)
-				.filter(item -> getEntities().values().stream()
-						.filter(e -> e instanceof EntityNPC)
-						.noneMatch(e -> e.getConfigId() == item.getConfigId()))
 				.toList();
 
 		if(entityNPCS.size() > 0){

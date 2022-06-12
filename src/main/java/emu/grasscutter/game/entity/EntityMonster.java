@@ -2,8 +2,10 @@ package emu.grasscutter.game.entity;
 
 import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.common.PropGrowCurve;
+
 import emu.grasscutter.data.excels.MonsterCurveData;
 import emu.grasscutter.data.excels.MonsterData;
+import emu.grasscutter.game.player.Player;
 import emu.grasscutter.game.props.EntityIdType;
 import emu.grasscutter.game.props.FightProperty;
 import emu.grasscutter.game.props.PlayerProperty;
@@ -114,6 +116,23 @@ public class EntityMonster extends GameEntity {
 	public void onCreate() {
 		// Lua event
 		getScene().getScriptManager().callEvent(EventType.EVENT_ANY_MONSTER_LIVE, new ScriptArgs(this.getConfigId()));
+	}
+
+	@Override
+	public void damage(float amount, int killerId) {
+		// Get HP before damage.
+		float hpBeforeDamage = this.getFightProperty(FightProperty.FIGHT_PROP_CUR_HP);
+
+		// Apply damage.
+		super.damage(amount, killerId);
+
+		// Get HP after damage.
+		float hpAfterDamage = this.getFightProperty(FightProperty.FIGHT_PROP_CUR_HP);
+
+		// Invoke energy drop logic.
+		for (Player player : this.getScene().getPlayers()) {
+			player.getEnergyManager().handleMonsterEnergyDrop(this, hpBeforeDamage, hpAfterDamage);
+		}
 	}
 
 	@Override

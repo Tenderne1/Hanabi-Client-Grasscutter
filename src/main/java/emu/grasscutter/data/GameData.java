@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import emu.grasscutter.Grasscutter;
+import emu.grasscutter.data.binout.*;
 import emu.grasscutter.data.excels.*;
 import emu.grasscutter.utils.Utils;
-import emu.grasscutter.data.binout.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -62,7 +62,6 @@ public class GameData {
 	
 	private static final Int2ObjectMap<SceneData> sceneDataMap = new Int2ObjectLinkedOpenHashMap<>();
 	private static final Int2ObjectMap<FetterData> fetterDataMap = new Int2ObjectOpenHashMap<>();
-
 	private static final Int2ObjectMap<CodexQuestData> codexQuestDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexQuestData> codexQuestDataIdMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexAnimalData> codexAnimalDataMap = new Int2ObjectOpenHashMap<>();
@@ -73,7 +72,6 @@ public class GameData {
 	private static final Int2ObjectMap<CodexReliquaryData> codexReliquaryDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<CodexReliquaryData> codexReliquaryDataIdMap = new Int2ObjectOpenHashMap<>();
 	private static final ArrayList<CodexReliquaryData> codexReliquaryArrayList = new ArrayList<>();
-
 	private static final Int2ObjectMap<FetterCharacterCardData> fetterCharacterCardDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<RewardData> rewardDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<WorldLevelData> worldLevelDataMap = new Int2ObjectOpenHashMap<>();
@@ -87,9 +85,9 @@ public class GameData {
 	private static final Int2ObjectMap<TowerFloorData> towerFloorDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<TowerLevelData> towerLevelDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<TowerScheduleData> towerScheduleDataMap = new Int2ObjectOpenHashMap<>();
-	private static final Int2ObjectMap<ForgeData> forgeDataMap = new Int2ObjectOpenHashMap<>();
-
 	private static final Int2ObjectMap<InvestigationMonsterData> investigationMonsterDataMap = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<CityData> cityDataMap = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<ForgeData> forgeDataMap = new Int2ObjectOpenHashMap<>();
 
 	// Cache
 	private static Map<Integer, List<Integer>> fetters = new HashMap<>();
@@ -246,7 +244,6 @@ public class GameData {
 	public static Int2ObjectMap<MonsterData> getMonsterDataMap() {
 		return monsterDataMap;
 	}
-
 	public static Int2ObjectMap<EnvAnimalGatherConfigData> getEnvAnimalGatherConfigDataMap() {
 		return envAnimalGatherConfigDataMap;
 	}
@@ -311,7 +308,6 @@ public class GameData {
 
 		return fetters;
 	}
-
 
 	public static Int2ObjectMap<CodexQuestData> getCodexQuestDataIdMap(){return codexQuestDataIdMap;}
 
@@ -378,12 +374,13 @@ public class GameData {
 	public static Int2ObjectMap<ForgeData> getForgeDataMap() {
 		return forgeDataMap;
 	}
-
 	public static Int2ObjectMap<GatherData> getGatherDataMap() {
 		return gatherDataMap;
 	}
 	public static Int2ObjectMap<InvestigationMonsterData> getInvestigationMonsterDataMap() {
 		return investigationMonsterDataMap;
 	}
-
+	public static Int2ObjectMap<CityData> getCityDataMap() {
+		return cityDataMap;
+	}
 }
