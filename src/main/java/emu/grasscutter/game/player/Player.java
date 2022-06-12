@@ -36,6 +36,7 @@ import emu.grasscutter.game.props.SceneType;
 import emu.grasscutter.game.quest.QuestManager;
 import emu.grasscutter.game.shop.ShopLimit;
 import emu.grasscutter.game.managers.MapMarkManager.*;
+import emu.grasscutter.game.tower.TowerData;
 import emu.grasscutter.game.tower.TowerManager;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.game.world.World;
@@ -113,7 +114,9 @@ public class Player {
 
 	private TeamManager teamManager;
 
-	private TowerManager towerManager;
+	@Transient private TowerManager towerManager;
+	private TowerData towerData;
+
 	private PlayerGachaInfo gachaInfo;
 	private PlayerProfile playerProfile;
 	private boolean showAvatar;
@@ -475,6 +478,14 @@ public class Player {
 
 	public TowerManager getTowerManager() {
 		return towerManager;
+	}
+
+	public TowerData getTowerData() {
+		if(towerData==null){
+			// because of mistake, null may be saved as storage at some machine, this if can be removed in future
+			towerData = new TowerData();
+		}
+		return towerData;
 	}
 
 	public QuestManager getQuestManager() {
