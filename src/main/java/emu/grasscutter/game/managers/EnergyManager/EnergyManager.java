@@ -329,10 +329,6 @@ public class EnergyManager {
      Energy logic related to using skills.
      **********/
     private void handleBurstCast(Avatar avatar, int skillId) {
-        if (avatar.getSkillDepot() != null && skillId == avatar.getSkillDepot().getEnergySkill()) {
-            player.setPlayerElementBurstInvincibleEndTime(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - player.getSession().getLag() + TimeUnit.MILLISECONDS.toMillis(2000));
-        }
-
         // Don't do anything if energy usage is disabled.
         if (!GAME_OPTIONS.energyUsage || !this.energyUsage) {
             return;
