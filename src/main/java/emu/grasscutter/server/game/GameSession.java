@@ -52,6 +52,14 @@ public class GameSession implements GameSessionManager.KcpChannel {
 		}
 	}
 
+	public int getLag() {
+		try{
+			return tunnel.getSrtt();
+		}catch (Throwable ignore){
+			return 1337;
+		}
+	}
+
 	public boolean useSecretKey() {
 		return useSecretKey;
 	}
