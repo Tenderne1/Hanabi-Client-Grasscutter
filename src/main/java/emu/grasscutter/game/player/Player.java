@@ -26,6 +26,7 @@ import emu.grasscutter.game.mail.MailHandler;
 import emu.grasscutter.game.managers.ForgingManager.ActiveForgeData;
 import emu.grasscutter.game.managers.ForgingManager.ForgingManager;
 import emu.grasscutter.game.managers.InsectCaptureManager;
+import emu.grasscutter.game.managers.ResinManager;
 import emu.grasscutter.game.managers.StaminaManager.StaminaManager;
 import emu.grasscutter.game.managers.SotSManager;
 import emu.grasscutter.game.managers.EnergyManager.EnergyManager;
@@ -155,12 +156,14 @@ public class Player {
 	@Transient private MapMarksManager mapMarksManager;
 	@Transient private StaminaManager staminaManager;
 	@Transient private EnergyManager energyManager;
+	@Transient private ResinManager resinManager;
 	@Transient private ForgingManager forgingManager;
 	@Transient private DeforestationManager deforestationManager;
 	@Transient private InsectCaptureManager insectCaptureManager;
 
 	private long springLastUsed;
 	private HashMap<String, MapMark> mapMarks;
+	private int nextResinRefresh;
 
 	@Deprecated
 	@SuppressWarnings({"rawtypes", "unchecked"}) // Morphia only!
@@ -214,6 +217,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.resinManager = new ResinManager(this);
 		this.forgingManager = new ForgingManager(this);
 	}
 
@@ -245,6 +249,7 @@ public class Player {
 		this.staminaManager = new StaminaManager(this);
 		this.sotsManager = new SotSManager(this);
 		this.energyManager = new EnergyManager(this);
+		this.resinManager = new ResinManager(this);
 		this.forgingManager = new ForgingManager(this);
 		this.deforestationManager = new DeforestationManager(this);
 	}
@@ -647,6 +652,15 @@ public class Player {
 		springLastUsed = val;
 	}
 
+	public int getNextResinRefresh() {
+		return nextResinRefresh;
+	}
+
+	public void setNextResinRefresh(int value) {
+		this.nextResinRefresh = value;
+	}
+
+
 	public SceneLoadState getSceneLoadState() {
 		return sceneState;
 	}
@@ -939,7 +953,7 @@ public class Player {
 		return this.getMailHandler().replaceMailByIndex(index, message);
 	}
 
-	public void interactWith(int gadgetEntityId, InterOpTypeOuterClass.InterOpType opType) {
+	public void interactWith(int gadgetEntityId, GadgetInteractReqOuterClass.GadgetInteractReq request) {
 		GameEntity entity = getScene().getEntityById(gadgetEntityId);
 
 		if (entity == null) {
@@ -971,7 +985,7 @@ public class Player {
 			if (gadget.getGadgetData().getType() == EntityType.RewardStatue) {
 				if (scene.getChallenge() != null) {
 					if (scene.getChallenge() instanceof DungeonChallenge dungeonChallenge)
-						dungeonChallenge.getStatueDrops(this);
+						dungeonChallenge.getStatueDrops(this , request);
 				}
 				this.sendPacket(new PacketGadgetInteractRsp(gadget, InteractType.INTERACT_TYPE_OPEN_STATUE));
 			} else {
@@ -979,7 +993,7 @@ public class Player {
 					return;
 				}
 
-				boolean shouldDelete = gadget.getContent().onInteract(this, opType);
+				boolean shouldDelete = gadget.getContent().onInteract(this, request.getOpType());
 
 				if (shouldDelete) {
 					entity.getScene().removeEntity(entity);
@@ -1155,6 +1169,10 @@ public class Player {
 		return this.energyManager;
 	}
 
+	public ResinManager getResinManager() {
+		return this.resinManager;
+	}
+
 	public ForgingManager getForgingManager() {
 		return this.forgingManager;
 	}
@@ -1218,6 +1236,12 @@ public class Player {
 			this.save();
 			this.sendPacket(new PacketAvatarExpeditionDataNotify(this));
 		}
+
+		// Send updated forge queue data, if necessary.
+		this.getForgingManager().sendPlayerForgingUpdate();
+
+		// Recharge resin.
+		this.getResinManager().rechargeResin();
 	}
 
 
@@ -1308,6 +1332,7 @@ public class Player {
 		session.send(new PacketPlayerHomeCompInfoNotify(this));
 		session.send(new PacketHomeComfortInfoNotify(this));
 		this.forgingManager.sendForgeDataNotify();
+		this.resinManager.onPlayerLogin();
 
 		getTodayMoonCard(); // The timer works at 0:0, some users log in after that, use this method to check if they have received a reward today or not. If not, send the reward.
 
