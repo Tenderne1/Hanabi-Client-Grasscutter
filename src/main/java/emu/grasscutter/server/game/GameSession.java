@@ -258,6 +258,8 @@ public class GameSession implements GameSessionManager.KcpChannel {
 		tunnel = null;
 	}
 
+
+
 	public void close() {
 		tunnel.close();
 	}

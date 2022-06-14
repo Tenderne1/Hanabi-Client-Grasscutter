@@ -1318,6 +1318,13 @@ public class Player {
 		World world = new World(this);
 		world.addPlayer(this);
 
+
+		// Add to gameserver
+		if (getSession().isActive()) {
+			getServer().registerPlayer(this);
+			getProfile().setPlayer(this); // Set online
+		}
+
 		// Multiplayer setting
 		this.setProperty(PlayerProperty.PROP_PLAYER_MP_SETTING_TYPE, this.getMpSetting().getNumber());
 		this.setProperty(PlayerProperty.PROP_IS_MP_MODE_AVAILABLE, 1);
@@ -1355,8 +1362,6 @@ public class Player {
 		if(event.isCanceled()) // If event is not cancelled, continue.
 			session.close();
 
-		getServer().registerPlayer(this);
-		getProfile().setPlayer(this); // Set online
 	}
 
 	public void onLogout() {
@@ -1376,6 +1381,7 @@ public class Player {
 		this.getProfile().syncWithCharacter(this);
 		this.getProfile().setPlayer(null); // Set offline
 
+
 		this.getCoopRequests().clear();
 
 		// Save to db
@@ -1388,6 +1394,7 @@ public class Player {
 
 		//reset wood
 		getDeforestationManager().resetWood();
+		getServer().getPlayers().remove(this.getUid());
 	}
 
 	public long getPlayerElementBurstInvincibleEndTime() {
