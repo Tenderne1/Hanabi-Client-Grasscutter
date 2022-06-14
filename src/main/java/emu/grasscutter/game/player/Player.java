@@ -1318,13 +1318,6 @@ public class Player {
 		World world = new World(this);
 		world.addPlayer(this);
 
-
-		// Add to gameserver
-		if (getSession().isActive()) {
-			getServer().registerPlayer(this);
-			getProfile().setPlayer(this); // Set online
-		}
-
 		// Multiplayer setting
 		this.setProperty(PlayerProperty.PROP_PLAYER_MP_SETTING_TYPE, this.getMpSetting().getNumber());
 		this.setProperty(PlayerProperty.PROP_IS_MP_MODE_AVAILABLE, 1);
@@ -1362,6 +1355,9 @@ public class Player {
 		if(event.isCanceled()) // If event is not cancelled, continue.
 			session.close();
 
+		// Add to gameserver
+		getServer().registerPlayer(this);
+		getProfile().setPlayer(this); // Set online
 	}
 
 	public void onLogout() {
