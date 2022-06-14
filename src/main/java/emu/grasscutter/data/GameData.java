@@ -25,6 +25,7 @@ public class GameData {
 	private static final Map<String, ScenePointEntry> scenePointEntries = new HashMap<>();
 	private static final Int2ObjectMap<MainQuestData> mainQuestData = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<SceneNpcBornData> npcBornData = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<HomeworldDefaultSaveData> homeworldDefaultSaveData = new Int2ObjectOpenHashMap<>();
 
 	// ExcelConfigs
 	private static final Int2ObjectMap<PlayerLevelData> playerLevelDataMap = new Int2ObjectOpenHashMap<>();
@@ -141,6 +142,9 @@ public class GameData {
 	}
 	public static Int2ObjectMap<SceneNpcBornData> getSceneNpcBornData() {
 		return npcBornData;
+	}
+	public static Int2ObjectMap<HomeworldDefaultSaveData> getHomeworldDefaultSaveData() {
+		return homeworldDefaultSaveData;
 	}
 	public static Int2ObjectMap<AvatarData> getAvatarDataMap() {
 		return avatarDataMap;
