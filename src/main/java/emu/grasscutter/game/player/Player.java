@@ -1297,10 +1297,6 @@ public class Player {
 		this.getQuestManager().loadFromDatabase();
 
 		// Add to gameserver (Always handle last)
-		if (getSession().isActive()) {
-			getServer().registerPlayer(this);
-			getProfile().setPlayer(this); // Set online
-		}
 	}
 
 	public void onLogin() {
@@ -1358,6 +1354,9 @@ public class Player {
 		PlayerJoinEvent event = new PlayerJoinEvent(this); event.call();
 		if(event.isCanceled()) // If event is not cancelled, continue.
 			session.close();
+
+		getServer().registerPlayer(this);
+		getProfile().setPlayer(this); // Set online
 	}
 
 	public void onLogout() {
