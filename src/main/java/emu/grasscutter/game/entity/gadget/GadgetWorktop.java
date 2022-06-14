@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import emu.grasscutter.game.entity.EntityGadget;
 import emu.grasscutter.game.player.Player;
+import emu.grasscutter.net.proto.GadgetInteractReqOuterClass;
 import emu.grasscutter.net.proto.InterOpTypeOuterClass;
 import emu.grasscutter.net.proto.SceneGadgetInfoOuterClass.SceneGadgetInfo;
 import emu.grasscutter.net.proto.WorktopInfoOuterClass.WorktopInfo;
@@ -35,7 +36,7 @@ public class GadgetWorktop extends GadgetContent {
 		this.worktopOptions.remove(option);
 	}
 
-	public boolean onInteract(Player player, InterOpTypeOuterClass.InterOpType opType) {
+	public boolean onInteract(Player player, GadgetInteractReqOuterClass.GadgetInteractReq opType) {
 		return false;
 	}
 

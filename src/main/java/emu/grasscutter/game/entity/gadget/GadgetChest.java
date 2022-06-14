@@ -4,6 +4,7 @@ import emu.grasscutter.Grasscutter;
 import emu.grasscutter.game.entity.EntityGadget;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.net.proto.BossChestInfoOuterClass.BossChestInfo;
+import emu.grasscutter.net.proto.GadgetInteractReqOuterClass;
 import emu.grasscutter.net.proto.InterOpTypeOuterClass;
 import emu.grasscutter.net.proto.InteractTypeOuterClass;
 import emu.grasscutter.net.proto.InteractTypeOuterClass.InteractType;
@@ -19,7 +20,7 @@ public class GadgetChest extends GadgetContent {
 		super(gadget);
 	}
 
-	public boolean onInteract(Player player, InterOpTypeOuterClass.InterOpType opType) {
+	public boolean onInteract(Player player, GadgetInteractReqOuterClass.GadgetInteractReq opType) {
 		var chestInteractHandlerMap = getGadget().getScene().getWorld().getServer().getWorldDataManager().getChestInteractHandlerMap();
 		var handler = chestInteractHandlerMap.get(getGadget().getGadgetData().getJsonName());
 		if(handler == null){
@@ -27,7 +28,7 @@ public class GadgetChest extends GadgetContent {
 			return false;
 		}
 
-		if(opType == INTER_OP_TYPE_START && handler.isTwoStep()){
+		if(opType.getOpType() == INTER_OP_TYPE_START && handler.isTwoStep()){
 			player.sendPacket(new PacketGadgetInteractRsp(getGadget(), InteractType.INTERACT_TYPE_OPEN_CHEST, INTER_OP_TYPE_START));
 			return false;
 		}else{
