@@ -19,6 +19,7 @@ import emu.grasscutter.game.quest.ServerQuestHandler;
 import emu.grasscutter.game.shop.ShopManager;
 import emu.grasscutter.game.tower.TowerScheduleManager;
 import emu.grasscutter.game.world.World;
+import emu.grasscutter.game.world.WorldDataManager;
 import emu.grasscutter.net.packet.PacketHandler;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
 import emu.grasscutter.server.event.types.ServerEvent;
@@ -58,6 +59,7 @@ public final class GameServer extends KcpServer {
 
 	private final CombineManger combineManger;
 	private final TowerScheduleManager towerScheduleManager;
+	private final WorldDataManager worldDataManager;
 
 	private static InetSocketAddress getAdapterInetSocketAddress(){
 		InetSocketAddress inetSocketAddress;
@@ -104,6 +106,7 @@ public final class GameServer extends KcpServer {
 		this.expeditionManager = new ExpeditionManager(this);
 		this.combineManger = new CombineManger(this);
 		this.towerScheduleManager = new TowerScheduleManager(this);
+		this.worldDataManager = new WorldDataManager(this);
 
 		// Hook into shutdown event.
 		Runtime.getRuntime().addShutdownHook(new Thread(this::onServerShutdown));
@@ -173,6 +176,9 @@ public final class GameServer extends KcpServer {
 		return towerScheduleManager;
 	}
 
+	public WorldDataManager getWorldDataManager() {
+		return worldDataManager;
+	}
 
 	public TaskMap getTaskMap() {
 		return this.taskMap;
