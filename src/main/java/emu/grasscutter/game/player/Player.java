@@ -1381,7 +1381,6 @@ public class Player {
 		this.getProfile().syncWithCharacter(this);
 		this.getProfile().setPlayer(null); // Set offline
 
-
 		this.getCoopRequests().clear();
 
 		// Save to db
@@ -1394,7 +1393,6 @@ public class Player {
 
 		//reset wood
 		getDeforestationManager().resetWood();
-		getServer().getPlayers().remove(this.getUid());
 	}
 
 	public long getPlayerElementBurstInvincibleEndTime() {

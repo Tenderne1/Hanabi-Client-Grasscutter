@@ -249,6 +249,8 @@ public class GameSession implements GameSessionManager.KcpChannel {
 			Player player = getPlayer();
 			// Call logout event.
 			player.onLogout();
+			getServer().getPlayers().remove(player.getUid());
+			Grasscutter.getLogger().info("Saving player " + player.getNickname() + "...");
 		}
 		try {
 			send(new BasePacket(PacketOpcodes.ServerDisconnectClientNotify));
@@ -257,7 +259,6 @@ public class GameSession implements GameSessionManager.KcpChannel {
 		}
 		tunnel = null;
 	}
-
 
 
 	public void close() {
