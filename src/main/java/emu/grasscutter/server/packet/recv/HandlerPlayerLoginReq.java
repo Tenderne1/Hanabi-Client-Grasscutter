@@ -34,7 +34,11 @@ public class HandlerPlayerLoginReq extends PacketHandler {
 			session.close();
 			return;
 		}
-		
+
+		if (Grasscutter.getConfig().server.game.enableInfoDetect)
+			Grasscutter.getLogger().info("Player: " + req.getAccountUid() + "-Info: " + req.getDeviceName() + "-Give a request to send packet");
+
+
 		// Load character from db
 		Player player = session.getPlayer();
 		
