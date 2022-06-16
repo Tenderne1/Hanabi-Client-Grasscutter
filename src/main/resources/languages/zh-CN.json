@@ -112,6 +112,12 @@
       "command_usage": "用法：account <create|delete> <用户名> [UID]",
       "description": "创建或删除账号"
     },
+    "ban": {
+      "command_usage": "用法：ban <玩家>",
+      "banned": "用户已封禁。",
+      "error": "在封禁该玩家的时候发生了一个错误。",
+      "description": "封禁一位玩家"
+    },
     "broadcast": {
       "command_usage": "用法：broadcast <消息>",
       "message_sent": "公告已发送。",

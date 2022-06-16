@@ -28,10 +28,12 @@ public class Account {
 	private String sessionKey; // Session token for dispatch server
 	private List<String> permissions;
     private Locale locale;
-	
+	private int permission;
+
 	@Deprecated
 	public Account() {
 		this.permissions = new ArrayList<>();
+		this.permission = 1;
         this.locale = LANGUAGE;
 	}
 
@@ -111,7 +113,7 @@ public class Account {
 	public List<String> getPermissions() {
 		return this.permissions;
 	}
-	
+
 	public boolean addPermission(String permission) {
 		if(this.permissions.contains(permission)) return false;
 		this.permissions.add(permission); return true;
@@ -142,6 +144,7 @@ public class Account {
 	}
 
 	public boolean hasPermission(String permission) {
+
 		if(this.permissions.contains("*") && this.permissions.size() == 1) return true;
 
 		// Add default permissions if it doesn't exist
@@ -158,6 +161,18 @@ public class Account {
 		}
 
 		return permissions.contains("*");
+	}
+
+	public int getPermission(){
+		return permission;
+	}
+
+	public void setPermission(int permission){
+		this.permission = permission;
+	}
+
+	public void setBanned(){
+		this.permission = -1;
 	}
 
 	public boolean removePermission(String permission) {

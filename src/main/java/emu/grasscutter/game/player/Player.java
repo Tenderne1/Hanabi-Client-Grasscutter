@@ -168,6 +168,7 @@ public class Player {
 	private HashMap<String, MapMark> mapMarks;
 	private int nextResinRefresh;
 
+
 	@Deprecated
 	@SuppressWarnings({"rawtypes", "unchecked"}) // Morphia only!
 	public Player() {
@@ -257,6 +258,9 @@ public class Player {
 		this.resinManager = new ResinManager(this);
 		this.forgingManager = new ForgingManager(this);
 		this.deforestationManager = new DeforestationManager(this);
+
+		//set default permission
+
 	}
 
 	public int getUid() {

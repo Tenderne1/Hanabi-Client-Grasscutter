@@ -22,6 +22,7 @@ import emu.grasscutter.game.world.World;
 import emu.grasscutter.game.world.WorldDataManager;
 import emu.grasscutter.net.packet.PacketHandler;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
+import emu.grasscutter.permission.PermissionManger;
 import emu.grasscutter.server.event.types.ServerEvent;
 import emu.grasscutter.server.event.game.ServerTickEvent;
 import emu.grasscutter.server.event.internal.ServerStartEvent;
@@ -60,6 +61,7 @@ public final class GameServer extends KcpServer {
 	private final CombineManger combineManger;
 	private final TowerScheduleManager towerScheduleManager;
 	private final WorldDataManager worldDataManager;
+	private final PermissionManger permissionManger;
 
 	private static InetSocketAddress getAdapterInetSocketAddress(){
 		InetSocketAddress inetSocketAddress;
@@ -78,11 +80,11 @@ public final class GameServer extends KcpServer {
 	}
 	public GameServer(InetSocketAddress address) {
 		ChannelConfig channelConfig = new ChannelConfig();
-		channelConfig.nodelay(true,40,2,true);
+		channelConfig.nodelay(true,20,2,true);
 		channelConfig.setMtu(1400);
 		channelConfig.setSndwnd(256);
 		channelConfig.setRcvwnd(256);
-		channelConfig.setTimeoutMillis(30*1000);//30s
+		channelConfig.setTimeoutMillis(5 * 1000);//30s
 		channelConfig.setUseConvChannel(true);
 		channelConfig.setAckNoDelay(false);
 
@@ -108,6 +110,8 @@ public final class GameServer extends KcpServer {
 		this.towerScheduleManager = new TowerScheduleManager(this);
 		this.worldDataManager = new WorldDataManager(this);
 
+		//TODO: PermissionManger
+		this.permissionManger = new PermissionManger(this);
 		// Hook into shutdown event.
 		Runtime.getRuntime().addShutdownHook(new Thread(this::onServerShutdown));
 	}
@@ -178,6 +182,10 @@ public final class GameServer extends KcpServer {
 
 	public WorldDataManager getWorldDataManager() {
 		return worldDataManager;
+	}
+
+	public PermissionManger getPermissionManger() {
+		return permissionManger;
 	}
 
 	public TaskMap getTaskMap() {
