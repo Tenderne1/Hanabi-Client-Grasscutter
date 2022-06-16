@@ -3,6 +3,7 @@ package emu.grasscutter.command.commands;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
+import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.player.Player;
 
 import java.util.List;
@@ -24,7 +25,11 @@ public class BanCommand implements CommandHandler {
         try {
             Player entity = Grasscutter.getGameServer().getPlayerByUid
                     (Integer.parseInt(uid), true);
-            Objects.requireNonNull(entity).getAccount().setBanned();
+            if (!Objects.requireNonNull(entity).getAccount().isBanned()) {
+                Objects.requireNonNull(entity).getAccount().setBanned();
+                CommandHandler.sendMessage(sender, translate(sender, "commands.ban.banned"));
+            }
+
             entity.getSession().close();
             Objects.requireNonNull(entity).getAccount().save();
         } catch (Exception e) {

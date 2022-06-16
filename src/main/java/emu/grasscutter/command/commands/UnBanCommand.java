@@ -3,6 +3,8 @@ package emu.grasscutter.command.commands;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
+import emu.grasscutter.database.DatabaseHelper;
+import emu.grasscutter.game.Account;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.permission.PermissionGroup;
 
@@ -23,24 +25,28 @@ public class UnBanCommand implements CommandHandler {
 
         String uid = args.get(0);
         try {
-            Player entity = Grasscutter.getGameServer().getPlayerByUid
-                    (Integer.parseInt(uid), true);
-
-
-            if (!Objects.requireNonNull(entity).getAccount().isBanned())
+            if (!DatabaseHelper.getAccountById(uid).isBanned())
                 CommandHandler.sendMessage(sender, translate(sender, "commands.unban.no_ban"));
             else {
                 try {
-                    Objects.requireNonNull(entity).getAccount().setPermission
-                            (Objects.requireNonNull(PermissionGroup.getGroupByName(Grasscutter.getConfig().account.basicPermission)).getNumber());
+                    Grasscutter.getLogger().info( DatabaseHelper.getAccountById(uid).getPermission() + " " +
+                            PermissionGroup.getGroupByName(Grasscutter.getConfig().account.basicPermission).getNumber());
+
+                    Account account = DatabaseHelper.getAccountById(uid);
+                    //delete at first due to it is fucking retard
+                    DatabaseHelper.deleteAccount(DatabaseHelper.getAccountById(uid));
+                    account.setPermission(PermissionGroup.getGroupByName(Grasscutter.getConfig().account.basicPermission).getNumber());
+                    account.save();
+
                     CommandHandler.sendMessage(sender, translate(sender, "commands.unban.success"));
                 } catch (Exception e) {
                     CommandHandler.sendMessage(sender, translate(sender, "commands.unban.error"));
                 }
             }
 
-            Objects.requireNonNull(entity).getAccount().save();
+
         } catch (Exception e) {
+            e.printStackTrace();
             CommandHandler.sendMessage(sender, translate(sender, "commands.unban.invalid_player"));
         }
 

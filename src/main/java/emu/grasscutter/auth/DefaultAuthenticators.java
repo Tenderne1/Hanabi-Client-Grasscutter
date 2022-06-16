@@ -64,7 +64,6 @@ public final class DefaultAuthenticators {
             if (Grasscutter.getConfig().account.newPermissionManager) {
                 if (account != null)
                     if (account.isBanned()) {
-                        Grasscutter.getLogger().info(translate("messages.dispatch.account.account_login_banned_error", address));
                         successfulLogin = false;
                         responseMessage = translate("messages.dispatch.account.banned", address);
                     }
@@ -128,7 +127,6 @@ public final class DefaultAuthenticators {
 
                     if (Grasscutter.getConfig().account.newPermissionManager)
                         if (account.isBanned()) {
-                            Grasscutter.getLogger().info(translate("messages.dispatch.account.account_login_banned_error", address));
                             response.retcode = -201;
                             response.message = translate("messages.dispatch.account.banned", address);
                         }
