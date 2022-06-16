@@ -2,7 +2,6 @@ package emu.grasscutter.game.home;
 
 import dev.morphia.annotations.Entity;
 import dev.morphia.annotations.Id;
-import emu.grasscutter.Grasscutter;
 import emu.grasscutter.data.binout.HomeworldDefaultSaveData;
 import emu.grasscutter.net.proto.HomeBasicInfoOuterClass.HomeBasicInfo;
 import emu.grasscutter.net.proto.HomeSceneArrangementInfoOuterClass.HomeSceneArrangementInfo;
@@ -46,7 +45,7 @@ public class HomeSceneItem {
         for(var blockItem : arrangementInfo.getBlockArrangementInfoListList()){
             var block = this.blockItems.get(blockItem.getBlockId());
             if(block == null){
-                Grasscutter.getLogger().warn("Could not found the Home Block {}", blockItem.getBlockId());
+                System.out.println(111);
                 continue;
             }
             block.update(blockItem);
@@ -80,7 +79,6 @@ public class HomeSceneItem {
                 .setBornPos(bornPos.toProto())
                 .setBornRot(bornRot.toProto())
                 .setDjinnPos(djinnPos.toProto())
-                .setIsSetBornPos(true)
                 .setSceneId(sceneId)
                 .setTmpVersion(1);
 

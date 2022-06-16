@@ -16,26 +16,19 @@ import java.util.List;
 @Builder(builderMethodName = "of")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class HomeBlockItem {
+
     @Id
     int blockId;
     boolean unlocked;
+
     List<HomeFurnitureItem> deployFurnitureList;
-    List<HomeAnimalItem> deployAnimalList;
-    List<HomeNPCItem> deployNPCList;
+
 
     public void update(HomeBlockArrangementInfo homeBlockArrangementInfo) {
         this.blockId = homeBlockArrangementInfo.getBlockId();
 
         this.deployFurnitureList = homeBlockArrangementInfo.getDeployFurniureListList().stream()
                 .map(HomeFurnitureItem::parseFrom)
-                .toList();
-
-        this.deployAnimalList = homeBlockArrangementInfo.getDeployAnimalListList().stream()
-                .map(HomeAnimalItem::parseFrom)
-                .toList();
-
-        this.deployNPCList = homeBlockArrangementInfo.getDeployNpcListList().stream()
-                .map(HomeNPCItem::parseFrom)
                 .toList();
     }
 
@@ -52,8 +45,6 @@ public class HomeBlockItem {
                 .setComfortValue(calComfort());
 
         this.deployFurnitureList.forEach(f -> proto.addDeployFurniureList(f.toProto()));
-        this.deployAnimalList.forEach(f -> proto.addDeployAnimalList(f.toProto()));
-        this.deployNPCList.forEach(f -> proto.addDeployNpcList(f.toProto()));
 
         return proto.build();
     }
@@ -68,8 +59,6 @@ public class HomeBlockItem {
                                 homeBlock.getFurnitures().stream()
                                         .map(HomeFurnitureItem::parseFrom)
                                         .toList())
-                .deployAnimalList(List.of())
-                .deployNPCList(List.of())
                 .build();
     }
 }
