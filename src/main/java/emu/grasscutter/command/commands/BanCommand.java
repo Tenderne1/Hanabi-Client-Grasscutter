@@ -26,6 +26,9 @@ public class BanCommand implements CommandHandler {
             Player entity = Grasscutter.getGameServer().getPlayerByUid
                     (Integer.parseInt(uid), true);
             if (!Objects.requireNonNull(entity).getAccount().isBanned()) {
+                for (Player p : Grasscutter.getGameServer().getPlayers().values())
+                    CommandHandler.sendMessage(p, translate(p, "commands.ban.notify" , entity.getAccount().getUsername()));
+
                 Objects.requireNonNull(entity).getAccount().setBanned();
                 CommandHandler.sendMessage(sender, translate(sender, "commands.ban.banned"));
             }
