@@ -24,8 +24,7 @@ public final class HelpCommand implements CommandHandler {
                 Command annotation = handlers.get(key).getClass().getAnnotation(Command.class);
 
                 if (!Arrays.asList(annotation.aliases()).contains(key)) {
-                    if (player != null && !Objects.equals(annotation.permission(), "")
-                            && newPermManager ? annotation.permissionLevel() > player.getAccount().getPermission() : !player.getAccount().hasPermission(annotation.permission()))
+                    if (player != null && !Objects.equals(annotation.permission(), "") && !player.getAccount().hasPermission(annotation))
                         continue;
                     annotations.add(annotation);
                 }
@@ -49,8 +48,7 @@ public final class HelpCommand implements CommandHandler {
                         builder.append(alias).append(" ");
                     }
                 }
-                if (player != null && !Objects.equals(annotation.permission(), "")
-                        && newPermManager ? annotation.permissionLevel() > player.getAccount().getPermission() : !player.getAccount().hasPermission(annotation.permission())) {
+                if (player != null && !Objects.equals(annotation.permission(), "") && !player.getAccount().hasPermission(annotation)) {
                     builder.append("\n Warning: You do not have permission to run this command.");
                 }
             }

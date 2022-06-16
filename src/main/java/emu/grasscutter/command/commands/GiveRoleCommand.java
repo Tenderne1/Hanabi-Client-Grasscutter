@@ -8,10 +8,11 @@ import emu.grasscutter.game.player.Player;
 import emu.grasscutter.permission.PermissionGroup;
 
 import java.util.List;
+import java.util.Objects;
 
 import static emu.grasscutter.utils.Language.translate;
 
-@Command(label = "giverole", usage = "giverole <uid> <role>", aliases = {"role"}, permission = "server.roles", description = "Give Role to somebody", permissionLevel = 3, targetRequirement = Command.TargetRequirement.NONE)
+@Command(label = "giverole", usage = "giverole <uid> <role>", aliases = {"role"}, permission = "server.roles", description = "commands.giverole.description", permissionLevel = 3, targetRequirement = Command.TargetRequirement.NONE)
 public class GiveRoleCommand implements CommandHandler {
 
     @Override
@@ -24,7 +25,7 @@ public class GiveRoleCommand implements CommandHandler {
         String uid = args.get(0).toLowerCase();
         int role = 1;
         try {
-            role = PermissionGroup.getGroupByName(args.get(1)).getNumber();
+            role = Objects.requireNonNull(PermissionGroup.getGroupByName(args.get(1))).getNumber();
         } catch (Exception e) {
             CommandHandler.sendMessage(sender, translate(sender, "commands.giverole.role_not_found"));
         }
@@ -33,6 +34,7 @@ public class GiveRoleCommand implements CommandHandler {
             Player player = Grasscutter.getGameServer().getPlayerByUid(Integer.parseInt(uid), true);
             Account account = player.getAccount();
             account.setPermission(role);
+            account.save();
         } catch (Exception e) {
             CommandHandler.sendMessage(sender, translate(sender, "commands.giverole.error"));
         }

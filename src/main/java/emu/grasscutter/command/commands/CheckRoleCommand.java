@@ -12,14 +12,14 @@ import java.util.Objects;
 
 import static emu.grasscutter.utils.Language.translate;
 
-@Command(label = "checkrole", usage = "checkrole <uid>", aliases = {"crole"}, permission = "player.roles", description = "Check Role with somebody", permissionLevel = 0, targetRequirement = Command.TargetRequirement.NONE)
+@Command(label = "checkrole", usage = "checkrole <uid>", aliases = {"crole"}, permission = "player.roles", description = "commands.checkrole.description", permissionLevel = 0, targetRequirement = Command.TargetRequirement.NONE)
 
 public class CheckRoleCommand implements CommandHandler {
 
     @Override
     public void execute(Player sender, Player targetPlayer, List<String> args) {
         if (args.size() < 1) {
-            CommandHandler.sendMessage(sender, translate(sender, "commands.giverole.command_usage"));
+            CommandHandler.sendMessage(sender, translate(sender, "commands.checkrole.command_usage"));
             return;
         }
 
@@ -28,10 +28,11 @@ public class CheckRoleCommand implements CommandHandler {
         try {
             Player player = Grasscutter.getGameServer().getPlayerByUid(Integer.parseInt(uid), true);
             Account account = Objects.requireNonNull(player).getAccount();
-            CommandHandler.sendMessage(sender, translate(sender, "commands.checkrole.role") + ": " +
+            account.save();
+            CommandHandler.sendMessage(sender, translate(sender, "commands.checkrole.role_found") + ": " +
                     Objects.requireNonNull(PermissionGroup.getGroupByNumber(account.getPermission())).name());
         } catch (Exception e) {
-            CommandHandler.sendMessage(sender, translate(sender, "commands.giverole.error"));
+            CommandHandler.sendMessage(sender, translate(sender, "commands.checkrole.role_not_found"));
         }
     }
 

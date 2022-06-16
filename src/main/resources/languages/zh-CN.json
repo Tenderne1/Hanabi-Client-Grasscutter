@@ -37,7 +37,9 @@
         "session_key_error": "会话密钥错误",
         "username_error": "未找到用户名",
         "username_create_error": "未找到用户名，建立连接失败",
-        "server_max_player_limit": "服务器在线人数已满"
+        "server_max_player_limit": "服务器在线人数已满",
+        "banned": "您的账号已被封禁 请联系Staff 解封"
+
       },
       "router_error": "[Dispatch] 无法连接路由"
     },
@@ -117,6 +119,19 @@
       "banned": "用户已封禁。",
       "error": "在封禁该玩家的时候发生了一个错误。",
       "description": "封禁一位玩家"
+    },
+    "giverole": {
+      "command_usage": "用法：giverole <UID> <权限组>",
+      "role_added": "已给予玩家权限组。",
+      "role_not_found": "权限组不存在。",
+      "error": "在给予玩家权限组的时候发生了一个错误。",
+      "description": "给一个用户一个权限组"
+    },
+    "checkrole": {
+      "command_usage": "用法：checkrole <UID>",
+      "role_found": "玩家已拥有权限组 ",
+      "role_not_found": "玩家未拥有权限组或者是权限组出现问题。",
+      "description": "检查一个用户的权限组"
     },
     "broadcast": {
       "command_usage": "用法：broadcast <消息>",
@@ -391,6 +406,14 @@
     "unlocktower": {
       "success": "现已解锁深境回廊(1-8层)。",
       "description": "解锁深境螺旋"
+    },
+    "unban": {
+      "invalid_player": "无效的玩家ID。",
+      "success": "已解除玩家 的封禁。",
+      "error": "无法解除玩家的封禁。",
+      "description": "解除玩家的封禁",
+      "no_ban": "玩家没有被封禁。",
+      "command_usage": "用法：unban <玩家ID>"
     },
     "weather": {
       "usage": "用法：weather <气候类型(天气ID)> <天气类型(气候ID)>\n天气类型 0: 无, 1: 晴天, 2: 多云, 3: 雨, 4: 雷雨, 5: 雪, 6: 雾",

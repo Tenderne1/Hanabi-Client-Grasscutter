@@ -22,10 +22,14 @@ public class BanCommand implements CommandHandler {
 
         String uid = args.get(0);
         try {
-            Objects.requireNonNull(Grasscutter.getGameServer().getPlayerByUid
-                    (Integer.parseInt(uid), true)).getAccount().setBanned();
+            Player entity = Grasscutter.getGameServer().getPlayerByUid
+                    (Integer.parseInt(uid), true);
+            Objects.requireNonNull(entity).getAccount().setBanned();
+            entity.getSession().close();
+            Objects.requireNonNull(entity).getAccount().save();
         } catch (Exception e) {
             CommandHandler.sendMessage(sender, translate(sender, "commands.ban.error"));
         }
+
     }
 }

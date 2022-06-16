@@ -251,6 +251,11 @@ public class GameSession implements GameSessionManager.KcpChannel {
 			player.onLogout();
 			getServer().getPlayers().remove(player.getUid());
 			Grasscutter.getLogger().info("Saving player " + player.getNickname() + "...");
+
+			if (player.getAccount().isBanned()) {
+				setState(SessionState.WAITING_FOR_TOKEN);
+			    Grasscutter.getLogger().info("Player " + player.getNickname() + " is banned, waiting for token...");
+			}
 		}
 		try {
 			send(new BasePacket(PacketOpcodes.ServerDisconnectClientNotify));

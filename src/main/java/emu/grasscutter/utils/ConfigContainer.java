@@ -111,6 +111,7 @@ public class ConfigContainer {
         public boolean autoCreate = false;
         public String[] defaultPermissions = {};
         public boolean newPermissionManager = false;
+        public String basicPermission = "User";
         public int maxPlayer = -1;
     }
 

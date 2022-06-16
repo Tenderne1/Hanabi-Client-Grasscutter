@@ -53,6 +53,7 @@ public final class DatabaseHelper {
 		Account account = new Account();
 		account.setUsername(username);
 		account.setId(Integer.toString(DatabaseManager.getNextId(account)));
+		account.setPermission(1);
 
 		if (reservedUid > 0) {
 			account.setReservedPlayerUid(reservedUid);
@@ -75,6 +76,7 @@ public final class DatabaseHelper {
 		account.setId(Integer.toString(DatabaseManager.getNextId(account)));
 		account.setUsername(username);
 		account.setPassword(password);
+		account.setPermission(1);
 		DatabaseHelper.saveAccount(account);
 		return account;
 	}
