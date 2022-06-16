@@ -53,6 +53,7 @@ import emu.grasscutter.net.proto.OnlinePlayerInfoOuterClass.OnlinePlayerInfo;
 import emu.grasscutter.net.proto.PlayerLocationInfoOuterClass.PlayerLocationInfo;
 import emu.grasscutter.net.proto.ProfilePictureOuterClass.ProfilePicture;
 import emu.grasscutter.net.proto.SocialDetailOuterClass.SocialDetail;
+import emu.grasscutter.permission.PermissionGroup;
 import emu.grasscutter.server.event.player.PlayerJoinEvent;
 import emu.grasscutter.server.event.player.PlayerQuitEvent;
 import emu.grasscutter.server.game.GameServer;
@@ -985,6 +986,9 @@ public class Player {
 		if (entity == null) {
 			return;
 		}
+
+		if (!Grasscutter.getGameServer().getPermissionManger().canAccess(this, PermissionGroup.USER , "Interact"))
+			return;
 
 		// Handle
 		if (entity instanceof EntityItem) {

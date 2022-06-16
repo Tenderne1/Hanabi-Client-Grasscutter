@@ -9,6 +9,7 @@ import emu.grasscutter.data.excels.WorldLevelData;
 import emu.grasscutter.game.entity.*;
 import emu.grasscutter.game.world.Scene;
 import emu.grasscutter.net.proto.VisionTypeOuterClass;
+import emu.grasscutter.permission.PermissionGroup;
 import emu.grasscutter.scripts.constants.EventType;
 import emu.grasscutter.scripts.data.*;
 import emu.grasscutter.scripts.engine.CoerceJavaToLua;
@@ -51,10 +52,10 @@ public class SceneScriptManager {
 		this.loadedGroupSetPerBlock = new Int2ObjectOpenHashMap<>();
 
 		// TEMPORARY
-		if (this.getScene().getId() < 10 && !Grasscutter.getConfig().server.game.enableScriptInBigWorld) {
+		if (this.getScene().getId() < 10 &&
+				!Grasscutter.getConfig().server.game.enableScriptInBigWorld)
 			return;
-		}
-		
+
 		// Create
 		this.init();
 	}

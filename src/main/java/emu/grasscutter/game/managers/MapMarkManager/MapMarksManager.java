@@ -1,9 +1,11 @@
 package emu.grasscutter.game.managers.MapMarkManager;
 
+import emu.grasscutter.Grasscutter;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.net.proto.MapMarkPointTypeOuterClass.MapMarkPointType;
 import emu.grasscutter.net.proto.MarkMapReqOuterClass.MarkMapReq;
 import emu.grasscutter.net.proto.MarkMapReqOuterClass.MarkMapReq.Operation;
+import emu.grasscutter.permission.PermissionGroup;
 import emu.grasscutter.server.packet.send.PacketMarkMapRsp;
 import emu.grasscutter.server.packet.send.PacketSceneEntityAppearNotify;
 import emu.grasscutter.utils.Position;
@@ -81,6 +83,12 @@ public class MapMarksManager {
             y = 300;
         }
         Position pos = mapMark.getPosition();
+        if (!Grasscutter.getGameServer().getPermissionManger().canAccess(player, PermissionGroup.USER , "Teleport")) {
+            player.getPos().set(player.getPos().getX(), player.getPos().getY(), player.getPos().getZ());
+            player.getScene().broadcastPacket(new PacketSceneEntityAppearNotify(player));
+            return;
+        }
+
         player.getPos().set(pos.getX(), y, pos.getZ());
         if (mapMark.getSceneId() != player.getSceneId()) {
             player.getWorld().transferPlayerToScene(player, mapMark.getSceneId(), player.getPos());
