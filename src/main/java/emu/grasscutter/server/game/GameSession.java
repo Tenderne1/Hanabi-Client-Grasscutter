@@ -6,6 +6,7 @@ import java.util.Set;
 
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.Grasscutter.ServerDebugMode;
+import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.Account;
 import emu.grasscutter.game.player.Player;
 import emu.grasscutter.net.packet.BasePacket;
@@ -43,7 +44,11 @@ public class GameSession implements GameSessionManager.KcpChannel {
 	public GameServer getServer() {
 		return server;
 	}
-	
+
+	public boolean tunnelIsEstablished() {
+		return tunnel != null;
+	}
+
 	public InetSocketAddress getAddress() {
 		try{
 			return tunnel.getAddress();
@@ -232,7 +237,7 @@ public class GameSession implements GameSessionManager.KcpChannel {
 				getServer().getPacketHandler().handle(this, opcode, header, payload);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Grasscutter.getLogger().error("Error handling packet: " + e.getMessage());
 		} finally {
 			//byteBuf.release(); //Needn't
 			packet.release();
@@ -248,13 +253,10 @@ public class GameSession implements GameSessionManager.KcpChannel {
 		if (this.isLoggedIn()) {
 			Player player = getPlayer();
 			// Call logout event.
-			player.onLogout();
-			getServer().getPlayers().remove(player.getUid());
-			Grasscutter.getLogger().info("Saving player " + player.getNickname() + "...");
-
-			if (player.getAccount().isBanned()) {
-				setState(SessionState.WAITING_FOR_TOKEN);
-			    Grasscutter.getLogger().info("Player " + player.getNickname() + " is banned, waiting for token...");
+			if (player != null) {
+				player.onLogout();
+				getServer().getPlayers().remove(player.getUid());
+				Grasscutter.getLogger().info("Saving player " + player.getNickname() + "...");
 			}
 		}
 		try {

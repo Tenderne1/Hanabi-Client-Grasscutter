@@ -30,7 +30,6 @@ public class BanCommand implements CommandHandler {
                 CommandHandler.sendMessage(sender, translate(sender, "commands.ban.banned"));
             }
 
-            entity.getSession().close();
             Objects.requireNonNull(entity).getAccount().save();
         } catch (Exception e) {
             CommandHandler.sendMessage(sender, translate(sender, "commands.ban.error"));
