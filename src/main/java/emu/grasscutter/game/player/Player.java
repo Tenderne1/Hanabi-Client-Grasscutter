@@ -987,9 +987,6 @@ public class Player {
 			return;
 		}
 
-		if (!Grasscutter.getGameServer().getPermissionManger().canAccess(this, PermissionGroup.USER , "Interact"))
-			return;
-
 		// Handle
 		if (entity instanceof EntityItem) {
 			// Pick item
