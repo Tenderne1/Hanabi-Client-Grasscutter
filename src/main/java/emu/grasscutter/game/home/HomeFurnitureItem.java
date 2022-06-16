@@ -5,7 +5,6 @@ import emu.grasscutter.data.GameData;
 import emu.grasscutter.data.binout.HomeworldDefaultSaveData;
 import emu.grasscutter.data.excels.ItemData;
 import emu.grasscutter.net.proto.HomeFurnitureDataOuterClass;
-import emu.grasscutter.net.proto.HomeMarkPointFurnitureDataOuterClass;
 import emu.grasscutter.utils.Position;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -30,16 +29,6 @@ public class HomeFurnitureItem {
                 .setParentFurnitureIndex(parentFurnitureIndex)
                 .setSpawnPos(spawnPos.toProto())
                 .setSpawnRot(spawnRot.toProto())
-                .build();
-    }
-
-    public HomeMarkPointFurnitureDataOuterClass.HomeMarkPointFurnitureData toMarkPointProto(int type){
-        return HomeMarkPointFurnitureDataOuterClass.HomeMarkPointFurnitureData.newBuilder()
-                .setFurnitureId(furnitureId)
-                .setGuid(guid)
-                .setFurnitureType(type)
-                .setPos(spawnPos.toProto())
-                // TODO NPC and farm
                 .build();
     }
 

@@ -5,8 +5,6 @@ import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
 import emu.grasscutter.database.DatabaseHelper;
 import emu.grasscutter.game.player.Player;
-import emu.grasscutter.server.packet.send.PacketBannedRsp;
-import emu.grasscutter.server.packet.send.PacketGetPlayerTokenRsp;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +30,6 @@ public class BanCommand implements CommandHandler {
                     CommandHandler.sendMessage(p, translate(p, "commands.ban.notify" , entity.getAccount().getUsername()));
 
                 Objects.requireNonNull(entity).getAccount().setBanned();
-                sender.getSession().send(new PacketBannedRsp(sender.getSession()));
                 CommandHandler.sendMessage(sender, translate(sender, "commands.ban.banned"));
             }
 
