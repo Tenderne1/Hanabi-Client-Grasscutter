@@ -179,6 +179,7 @@ public class ConfigContainer {
         public boolean enableShopItems = true;
         public boolean staminaUsage = true;
         public boolean energyUsage = false;
+        public boolean customReward = false;
         public ResinOptions resinOptions = new ResinOptions();
         public Rates rates = new Rates();
 
