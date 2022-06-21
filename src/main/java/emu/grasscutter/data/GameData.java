@@ -77,8 +77,11 @@ public class GameData {
 	private static final ArrayList<CodexReliquaryData> codexReliquaryArrayList = new ArrayList<>();
 	private static final Int2ObjectMap<FetterCharacterCardData> fetterCharacterCardDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<RewardData> rewardDataMap = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<WorldAreaData> worldAreaDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<WorldLevelData> worldLevelDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<DailyDungeonData> dailyDungeonDataMap = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<DungeonEntryData> dungeonEntryDataMap = new Int2ObjectOpenHashMap<>();
+
 	private static final Int2ObjectMap<DungeonData> dungeonDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<QuestData> questDataMap = new Int2ObjectOpenHashMap<>();
 	private static final Int2ObjectMap<ShopGoodsData> shopGoodsDataMap = new Int2ObjectOpenHashMap<>();
@@ -319,6 +322,10 @@ public class GameData {
 
 	public static ArrayList<CodexReliquaryData> getcodexReliquaryArrayList(){return codexReliquaryArrayList;}
 
+	public static Int2ObjectMap<WorldAreaData> getWorldAreaDataMap() {
+		return worldAreaDataMap;
+	}
+	
 	public static Int2ObjectMap<WorldLevelData> getWorldLevelDataMap() {
 		return worldLevelDataMap;
 	}
@@ -329,6 +336,10 @@ public class GameData {
 	  
 	public static Int2ObjectMap<DailyDungeonData> getDailyDungeonDataMap() {
 		return dailyDungeonDataMap;
+	}
+
+	public static Int2ObjectMap<DungeonEntryData> getDungeonEntryDatatMap(){
+		return dungeonEntryDataMap;
 	}
 
 	public static Map<Integer, List<ShopGoodsData>> getShopGoodsDataEntries() {
