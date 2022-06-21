@@ -350,6 +350,13 @@
       "success": "正在关闭服务器...",
       "description": "停止服务器"
     },
+    "switchElement": {
+      "usage": "用法：switchelement <元素 [White/Anemo/Geo/Electro]>",
+      "success": "已切换到 %s 元素。",
+      "invalidElement": "无效的元素。",
+      "not_console": "不能在控制台中使用此命令。",
+      "description": "切换元素"
+    },
     "talent": {
       "usage_1": "设置天赋等级：/talent set <天赋ID> <数值>",
       "usage_2": "另一种设置天赋等级的方法：/talent <n|e|q> <数值>\nn: 普通攻击, e: 元素战技, q: 元素爆发",
